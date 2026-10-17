@@ -1,167 +1,34 @@
 # Campus Data MCP
 
-**A local browser bridge that lets AI agents use your existing CSMAR and CNRDS access,
-without giving the agent a database password.**
+[中文](#中文介绍) · [English](#english)
 
-Status: **experimental MVP**. The browser workflow is integration-tested against synthetic
-sites. Public-site smoke tests and institutional download verification are separate; see
-[validation](docs/validation.md). This is not an official CSMAR or CNRDS integration.
+## 中文介绍
 
-## Is password-free access possible?
+**让 AI 智能体使用学校已有的 CSMAR（国泰安）和 CNRDS（中国研究数据服务平台）访问权限，检索并下载研究数据，无需向智能体提供数据库账号和密码。**
 
-Yes, where the institution's subscription enables campus-IP / school login. The browser
-runs **on your computer**, so requests use your campus network or approved VPN. A cloud
-agent connects to this local MCP server; running the browser on GitHub Actions or a
-public server generally loses your campus IP.
+本项目在你的电脑上运行浏览器，通过校园网或学校支持的 VPN 使用机构授权。接入支持本地 MCP 的 AI 智能体后，可以让它搜索数据目录、选择数据表和筛选条件，并将导出文件保存到本地。智能体若具备本地文件读取工具，还可以继续读取和分析下载的数据。
 
-| Service | Institutional route | Important boundary |
-| --- | --- | --- |
-| CSMAR | The website can recognize subscribing institutional IPs and log in automatically. | A visible table is not necessarily subscribed. The official personal-account API is a separate access route. |
-| CNRDS | Use the website's visible **学校登录 / School Login** button, when available. | Basic databases may be available in full; specialty databases can still require personal registration. |
+使用前，学校需已订阅相应数据库，且当前网络具备访问权限。电脑需安装 Python 3.11+ 和 Chromium，并按[安装与配置指南](docs/setup.md)连接智能体。具备本地命令执行能力的智能体可协助完成安装；仅发送 GitHub 链接不会自动启用数据库访问。
 
-CNRDS is sometimes misspelled “CRNDS.” This project means **中国研究数据服务平台** at
-`cnrds.com`. It cannot create subscriptions, extend an institution's licensed scope, or
-make specialty data available when the website only grants samples.
+**当前状态：实验性项目。** 已在一个获授权的校园网络中完成两个数据库的小规模真实下载验证，部分界面操作仍需要浏览器辅助。其他学校、专题数据库及完全无人值守的使用方式尚未验证。实际可用数据取决于学校订阅和平台权限，使用时请遵守相应的数据许可。
 
-Read the [feasibility assessment and sources](docs/feasibility.md).
+## English
 
-## Install
+**Let AI agents search and download research data through your institution’s existing CSMAR and CNRDS access, without sharing a database username or password with the agent.**
 
-Python 3.11+ and a desktop capable of running Chromium are required.
+The project runs a browser on your computer and uses your campus network or institution-supported VPN. Connect it to an agent that supports local MCP servers to search catalogues, select tables and filters, and save exports locally. Agents with file-reading tools can also read and analyse the downloaded data.
 
-```sh
-git clone https://github.com/Thlookingatyou/campus-data-mcp.git
-cd campus-data-mcp
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-python -m playwright install chromium
-campus-data doctor
-```
+Your institution must subscribe to the requested data, and your network must have access. Setup requires Python 3.11+, Chromium and a local MCP connection; follow the [setup guide](docs/setup.md). An agent with local command execution can help install it. Sharing the GitHub link alone does not enable database access.
 
-On Windows activate with `.venv\Scripts\Activate.ps1` and use `python` in place of
-`python3`. Browser tests on Linux require `python -m playwright install --with-deps chromium`.
+**Status: experimental.** Small real downloads from both providers have been verified on one authorized campus network, with browser assistance needed for some controls. Other institutions, specialty databases and fully unattended operation remain unverified. Available data depends on institutional subscriptions and provider permissions; applicable data licences still apply.
 
-Connect to campus Wi-Fi, campus Ethernet, or your institution's authorized VPN. For a
-first check, open one of the dedicated browsers:
+## 文档 / Documentation
 
-```sh
-campus-data login csmar
-campus-data login cnrds
-```
+- [安装与配置 / Setup and usage](docs/setup.md)
+- [智能体操作流程 / Agent workflow](docs/agent-workflow.md)
+- [验证结果与已知限制 / Validation and limitations](docs/validation.md)
+- [可行性评估 / Feasibility assessment](docs/feasibility.md)
 
-Use automatic/school login if your institution supports it. If the website requires
-SSO, SMS, CAPTCHA, or personal registration, complete that yourself in the browser.
-The connector has no password argument and will not fill authentication fields.
-The dedicated profile stays on your computer and can be reused by the server.
+本项目为非官方集成，代码采用 MIT 许可证；数据库内容及下载数据的权利归原权利人所有。
 
-## Connect an agent
-
-Configure an MCP client to start this process locally. Replace both absolute paths:
-
-```json
-{
-  "mcpServers": {
-    "campus-data": {
-      "command": "/ABSOLUTE/PATH/campus-data-mcp/.venv/bin/python",
-      "args": ["-m", "campus_data_mcp.cli", "serve"],
-      "env": {
-        "CAMPUS_DATA_HOME": "/ABSOLUTE/PRIVATE/PATH/campus-data-state"
-      }
-    }
-  }
-}
-```
-
-If you installed the project into a different virtual environment, use that environment's
-Python. On Windows, its executable is `.venv\Scripts\python.exe`. The server uses
-**stdio only**; it does not expose an HTTP port or a shared public endpoint.
-
-Example request to your agent:
-
-> Open CNRDS and try school login. Search for the database containing corporate patent
-> data. Inspect whether the selected table offers full data or samples. Select the fields
-> and years I request, review the query on screen, and save the available CSV export locally.
-> Report the file location and any access or coverage limitations.
-
-See [the agent workflow](docs/agent-workflow.md) for a precise tool sequence.
-
-## Tools
-
-| Tool | Purpose |
-| --- | --- |
-| `campus_open` | Open a provider homepage or a provider URL in its dedicated browser. |
-| `campus_school_login` | Click a unique visible school-login button. |
-| `campus_inspect` | Read visible text and controls in all provider tabs and frames. |
-| `campus_search` | Search the current website catalogue; accept explicit control references when needed. |
-| `campus_act` | Click, fill, select, check, or press a restricted key on a current control. |
-| `campus_scroll` | Bring a control into view. |
-| `campus_export` | Click an export control and record the intended query. |
-| `campus_downloads` | Check local download status and receipts. |
-| `campus_close` | Close a provider session, keeping its profile for reuse. |
-
-Every inspection or action returns fresh references and expires older ones. Search results
-and export jobs can load asynchronously: inspect again, rather than resubmitting the query.
-Browser-generated downloads are captured even if the provider produces them later or in
-a new tab. When packaging finishes with a link, the agent must inspect and click that link.
-
-## Local storage and privacy
-
-Default root: `~/.local/share/campus-data-mcp`. Override it with `CAMPUS_DATA_HOME`.
-
-```text
-profiles/csmar/    private dedicated Chromium profile
-profiles/cnrds/    separate CNRDS profile
-incoming/         browser temporary downloads
-downloads/csmar/  exports and *.manifest.json receipts
-downloads/cnrds/  exports and *.manifest.json receipts
-```
-
-Profiles contain session secrets. Do not upload them, put the state directory inside a
-public repository, or share it with other users. Directories are owner-only and saved
-exports/manifests are owner-readable on systems with POSIX permissions. Windows users
-should use a private user directory with suitable ACLs. These files are **not encrypted
-by this project**. Close the server before deleting a profile to forget its session.
-
-The tools do not return cookies, local storage, hidden fields, HTML source, input values,
-or full signed URLs. Page text and labels can still include personal or licensed content;
-token redaction is best-effort, not a general data-loss-prevention system. Any text returned
-to a hosted AI model leaves your computer. Export tools return paths and receipts, not file
-contents. Check your institution's license and model arrangements before exposing restricted
-page content or asking another tool to read an export. A local model is an option.
-
-Provider HTTPS domains and their subdomains are allowed. CNRDS's exact export host
-`cnrds-file.oss-cn-shanghai.aliyuncs.com` is also allowed for CNRDS; other Aliyun buckets
-are excluded. Other requests, redirects and
-WebSockets are blocked. A required institution SSO or export CDN can be enabled **by the
-local user** with comma-separated exact hostnames in `CAMPUS_DATA_EXTRA_HOSTS`; this
-widens the trust boundary for both provider sessions. VPN portals that rewrite domains
-need explicit configuration and may not work. Never disable TLS verification.
-
-`CAMPUS_DATA_HEADLESS=1` is available for automated testing after access is established;
-the default visible browser makes human verification possible. There is no automatic
-CAPTCHA solving, fingerprint spoofing, quota splitting, account rotation, or bulk crawler.
-Actions are serialized and spaced at least one second apart. This interval does not
-replace provider limits: stop if the service displays a restriction.
-
-The retained-file limit is 512 MiB **after transfer**; it is not a bandwidth cap. ZIP and 7z
-exports receive file-signature checks. Archives
-are retained without extraction. Files are not executed or automatically parsed. A checksum
-proves file integrity, not correct coverage, full-data entitlement, or freedom from malware.
-
-## Development
-
-```sh
-python -m pip install -e '.[dev]'
-ruff check .
-pytest -q
-```
-
-Tests use real Chromium with synthetic provider responses and synthetic data. They do
-not need a school network or commercial data. CI runs the same suite. See
-[validation](docs/validation.md) for what has and has not been verified.
-
-## License
-
-MIT for this project's original code. Database products, service documentation, and
-downloaded data retain their owners' rights. This repository grants no rights to them.
+An unofficial integration. Original code is MIT-licensed; database content and downloaded data retain their owners’ rights.
