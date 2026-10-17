@@ -21,8 +21,11 @@ an end-to-end institutional download.
   duplicate filename isolation, rejected empty/executable/HTML exports, stale references,
   login-field isolation, cross-provider profile isolation, custom framework controls and pagination.
 
-GitHub's Linux/Python-version matrix is configured but has not yet run remotely. Local
-execution required permission to launch Chromium outside the agent's process sandbox.
+The GitHub Linux matrix tests Python 3.11 and 3.13. Its initial run passed on Python 3.11
+and caught an asynchronous popup-readiness race in the Python 3.13 test. The popup test
+now awaits the browser's page-opening event before inspecting the new tab. Check the
+[latest CI results](https://github.com/Thlookingatyou/campus-data-mcp/actions) for remote status.
+Local execution required permission to launch Chromium outside the agent's process sandbox.
 
 ## Test layers
 

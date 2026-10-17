@@ -85,9 +85,10 @@ async def test_redirect_or_link_to_another_domain_is_blocked(bridge):
 async def test_popup_download_is_captured(bridge):
     await bridge.open("cnrds")
     snapshot = await bridge.search("cnrds", "daily")
-    await bridge.act("cnrds", ref(snapshot, "Open job page"), "click")
     session = bridge.sessions["cnrds"]
-    popup = list(session.pages.values())[-1]
+    async with session.context.expect_page() as opened:
+        await bridge.act("cnrds", ref(snapshot, "Open job page"), "click")
+    popup = await opened.value
     await popup.wait_for_load_state("domcontentloaded")
     snapshot = await bridge.inspect("cnrds")
     assert len(snapshot["pages"]) == 2
