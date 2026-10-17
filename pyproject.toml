@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "campus-data-mcp"
+version = "0.1.0"
+description = "Local, password-free browser tools for authorized CSMAR and CNRDS research"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["mcp>=1.30,<2", "playwright>=1.64,<2"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.25,<2", "ruff>=0.9,<1"]
+
+[project.scripts]
+campus-data = "campus_data_mcp.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/campus_data_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tiny synthetic fixture files; synchronous assertions keep test failures legible.
+"tests/*" = ["ASYNC240"]

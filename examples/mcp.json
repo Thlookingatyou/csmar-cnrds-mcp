@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "campus-data": {
+      "command": "/ABSOLUTE/PATH/campus-data-mcp/.venv/bin/python",
+      "args": ["-m", "campus_data_mcp.cli", "serve"],
+      "env": {
+        "CAMPUS_DATA_HOME": "/ABSOLUTE/PRIVATE/PATH/campus-data-state"
+      }
+    }
+  }
+}

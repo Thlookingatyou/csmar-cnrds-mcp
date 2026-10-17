@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Synthetic provider fixture</title>
+<body>
+<h1>Synthetic institutional database</h1>
+<button onclick="schoolLogin()">学校登录</button>
+<div id="status">Institution not selected</div>
+<span id="custom-widget" style="cursor:pointer">Custom catalogue tab</span>
+<label>Username <input name="username" value="fixture-user"></label>
+<label>Password <input type="password" value="fixture-password"></label>
+<input type="hidden" name="token" value="fixture-hidden-token">
+<textarea name="private_notes" style="display:none">fixture-secret-notes</textarea>
+<script>const hiddenToken = "fixture-script-token";</script>
+<a href="https://evil.invalid/exfiltrate">External link</a>
+<form onsubmit="event.preventDefault(); document.getElementById('results').hidden=false;">
+  <input placeholder="搜索数据库 / Search databases" id="catalogue_search">
+  <button type="submit">Search</button>
+</form>
+<section id="results" hidden>
+  <h2>Daily trading — synthetic table (basic, full export available)</h2>
+  <p>Dates are ISO format; currency unit CNY. These are fictional test data.</p>
+  <label>Start date <input type="date" name="start_date"></label>
+  <label>End date <input type="date" name="end_date"></label>
+  <label>Stock code <input name="stock_code"></label>
+  <label><input type="checkbox" name="price">Closing price</label>
+  <label>Format <select name="format"><option value="csv">CSV</option>
+    <option value="xlsx">Excel</option></select></label>
+  <button onclick="setTimeout(() => {location.href='/export?token=fixture-signed-url'},100)">
+    Export CSV</button>
+  <button onclick="window.open('/popup')">Open job page</button>
+  <button onclick="location.href='/bad-export'">Export executable</button>
+  <button onclick="location.href='/empty-export'">Export empty</button>
+  <button onclick="location.href='/html-export'">Export expired-session HTML</button>
+</section>
+<script>
+document.getElementById('custom-widget').addEventListener('click', event => {
+  event.target.innerText = 'Custom tab activated';
+});
+function schoolLogin() {
+  document.getElementById('status').innerText = 'Synthetic University — Log out';
+  localStorage.setItem('fixture-session', 'private-session-token');
+}
+</script>
+</body></html>
