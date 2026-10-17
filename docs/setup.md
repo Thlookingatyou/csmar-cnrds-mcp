@@ -60,6 +60,40 @@ SSO, SMS, CAPTCHA, or personal registration, complete that yourself in the brows
 The connector has no password argument and will not fill authentication fields.
 The dedicated profile stays on your computer and can be reused by the server.
 
+## Codex skill
+
+The repository includes a reusable skill at [`skills/csmar-cnrds`](../skills/csmar-cnrds).
+It guides Codex through connection setup, campus login, table discovery, filters, export
+jobs and file validation. The skill uses this project's local MCP connector; installing
+instructions alone does not start the browser or enable database access.
+
+Ask Codex:
+
+> $skill-installer Install the skill from https://github.com/Thlookingatyou/csmar-cnrds-mcp/tree/main/skills/csmar-cnrds
+
+Then invoke it in the next turn:
+
+> $csmar-cnrds Set up the local connector, then search CNRDS for the data I request using my institution's existing access.
+
+中文示例：
+
+> $csmar-cnrds 请配置本地连接，使用学校已有权限，检索并下载 CSMAR 中 2024 年 1 月上市公司的公司基本信息，检查下载文件并告诉我保存位置。
+
+The skill is normally available on the next turn. If it does not appear, restart Codex.
+Its [connection reference](../skills/csmar-cnrds/references/setup.md) contains Codex CLI
+and TOML examples. A newly configured MCP server may also require a client reload or
+restart before its tools appear. Human verification and some browser controls may still
+require assistance.
+
+For manual local installation, copy only the `csmar-cnrds` skill folder into your Codex
+user skill directory. Current Codex documentation lists `~/.agents/skills`; the bundled
+`$skill-installer` may use `$CODEX_HOME/skills` (default `~/.codex/skills`) on installations
+that support that location. Prefer the bundled installer and verify discovery in your app.
+Do not copy profiles or downloaded data with the skill.
+
+References: [official skill guidance](https://learn.chatgpt.com/docs/build-skills),
+[official MCP configuration](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+
 ## Connect an agent
 
 Configure an MCP client to start this process locally. Replace both absolute paths:

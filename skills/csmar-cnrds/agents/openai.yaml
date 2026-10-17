@@ -1,0 +1,4 @@
+interface:
+  display_name: "CSMAR & CNRDS Research Data"
+  short_description: "Search and download authorized CSMAR/CNRDS data"
+  default_prompt: "Use $csmar-cnrds to search and download the CSMAR or CNRDS data I request using my institution’s existing access."

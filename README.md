@@ -14,6 +14,8 @@ Your institution must subscribe to the requested data, and your network must hav
 
 **Status: experimental.** Small real downloads from both providers have been verified on one authorized campus network, with browser assistance needed for some controls. Other institutions, specialty databases and fully unattended operation remain unverified. Available data depends on institutional subscriptions and provider permissions; applicable data licences still apply.
 
+**Codex skill:** Install [`skills/csmar-cnrds`](skills/csmar-cnrds) with `$skill-installer`, then invoke `$csmar-cnrds` with your data request. See [Codex setup](docs/setup.md#codex-skill). The local MCP connector is still required.
+
 ## 中文介绍
 
 **让 AI 智能体使用学校已有的 CSMAR（国泰安）和 CNRDS（中国研究数据服务平台）访问权限，检索并下载研究数据，无需向智能体提供数据库账号和密码。**
@@ -23,6 +25,8 @@ Your institution must subscribe to the requested data, and your network must hav
 使用前，学校需已订阅相应数据库，且当前网络具备访问权限。电脑需安装 Python 3.11+ 和 Chromium，并按[安装与配置指南](docs/setup.md)连接智能体。具备本地命令执行能力的智能体可协助完成安装；仅发送 GitHub 链接不会自动启用数据库访问。
 
 **当前状态：实验性项目。** 已在一个获授权的校园网络中完成两个数据库的小规模真实下载验证，部分界面操作仍需要浏览器辅助。其他学校、专题数据库及完全无人值守的使用方式尚未验证。实际可用数据取决于学校订阅和平台权限，使用时请遵守相应的数据许可。
+
+**Codex 技能：** 使用 `$skill-installer` 安装 [`skills/csmar-cnrds`](skills/csmar-cnrds)，然后用 `$csmar-cnrds` 提出数据需求。详见 [Codex 配置](docs/setup.md#codex-skill)；仍需配置本地 MCP 连接。
 
 ## Documentation / 文档
 
