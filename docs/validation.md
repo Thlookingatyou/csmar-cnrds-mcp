@@ -5,7 +5,7 @@ an end-to-end institutional download.
 
 ## Results — 2026-10-18
 
-- **43 tests passed** on macOS arm64, Python 3.13.5, MCP SDK 1.30.0, Playwright 1.64.0
+- **46 tests passed** on macOS arm64, Python 3.13.5, MCP SDK 1.30.0, Playwright 1.64.0
   and Chromium 156. The suite includes real browser interaction and a real stdio MCP client.
 - Static checks passed with Ruff 0.17.1. Editable package installation and the `doctor`
   command succeeded.
@@ -21,6 +21,32 @@ an end-to-end institutional download.
   duplicate filename isolation, rejected empty/executable/HTML exports, stale references,
   login-field isolation, cross-provider profile isolation, custom framework controls and pagination.
 
+## Campus acceptance — 2026-10-18
+
+An authorized user subsequently requested testing from a subscribed campus network.
+Both providers supported password-free institutional access, catalogue search, preview
+and receipt of a small data export:
+
+| Provider | Query | Verified result |
+| --- | --- | --- |
+| CSMAR | Company Profile, listing dates 2024-01-01 through 2024-01-31; stock code, English acronym, listing date | ZIP received; embedded XLSX contains 14 data rows and three header rows, three columns |
+| CNRDS | Basic MACRO / 综合 / 行政区划; explicit condition 年份 等于 2024; 年份, 字段名称, 数值 | Archive received; ZIP integrity verified; embedded XLSX contains 11 data rows, all 2024, three columns |
+
+The real workflows exposed zero-size catalogue link wrappers and CNRDS's exact Aliyun
+export host. These are covered by the updated scope and control tests. CNRDS may deliver
+a ZIP container with a `.7z` filename; both archive signatures are accepted for that suffix.
+The received CNRDS file was recovered from the browser's temporary download after the
+initial strict 7z signature check rejected this packaging. The corrected check passes
+the recovered file and regression tests; the full live download was not repeated afterward.
+
+Native browser interaction was needed to dismiss a CSMAR tutorial overlay and click the
+CNRDS final download icon, which the current MCP snapshot did not expose. Thus these
+results demonstrate campus feasibility, not a completely unattended MCP-only workflow.
+Institution identities, profiles, signed links, screenshots and licensed exports remain
+outside this repository. Specialty products, other institutions, quota behavior and VPN
+routing were not verified. Export coverage was checked against the preview and selected
+filters, not an independently produced manual export.
+
 The GitHub Linux matrix tests Python 3.11 and 3.13. Its initial run passed on Python 3.11
 and caught an asynchronous popup-readiness race in the Python 3.13 test. The popup test
 now awaits the browser's page-opening event before inspecting the new tab. Check the
@@ -34,8 +60,8 @@ Local execution required permission to launch Chromium outside the agent's proce
   Synthetic login/search/filter/export flows include frames and popups. All data is invented.
 - MCP protocol integration: local stdio server initialization, tool discovery and validation.
 - Public-site smoke checks: real public homepages where reachable, without credentials.
-- Campus acceptance: not yet performed; requires a subscribed institution's network and
-  permission to access/download the selected products.
+- Campus acceptance: two basic-table exports verified as described above, with native
+  interaction required for two controls. This does not establish access to other products.
 
 ## Campus acceptance checklist
 

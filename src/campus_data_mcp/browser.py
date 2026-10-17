@@ -33,6 +33,7 @@ EXPORT_EXTENSIONS = {
     ".xlsx",
     ".xls",
     ".zip",
+    ".7z",
     ".gz",
     ".dta",
     ".sav",
@@ -499,5 +500,8 @@ def _validate_and_hash_file(path: Path) -> str:
             )
         if path.suffix.lower() in {".xlsx", ".zip"} and not head.startswith(b"pk"):
             raise CampusError("Export does not have the expected ZIP/XLSX file signature.")
+        # CNRDS can name a ZIP container .7z; accept either archive signature.
+        if path.suffix.lower() == ".7z" and not head.startswith((b"7z\xbc\xaf\x27\x1c", b"pk")):
+            raise CampusError("Export does not have the expected 7z/ZIP file signature.")
         handle.seek(0)
         return hashlib.file_digest(handle, "sha256").hexdigest()

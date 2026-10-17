@@ -16,6 +16,7 @@ class ProviderSpec:
     home: str
     domain: str
     note: str
+    export_hosts: tuple[str, ...] = ()
 
 
 PROVIDERS: dict[str, ProviderSpec] = {
@@ -32,6 +33,7 @@ PROVIDERS: dict[str, ProviderSpec] = {
         "cnrds.com",
         "School login can provide basic databases. Specialty databases may require "
         "personal registration, even on campus. Sample access is not full access.",
+        ("cnrds-file.oss-cn-shanghai.aliyuncs.com",),
     ),
 }
 
@@ -64,8 +66,14 @@ def allowed_url(provider: str, url: str, extra_hosts: tuple[str, ...] = ()) -> b
     if parts.scheme != "https" or parts.username or parts.password or port not in {None, 443}:
         return False
     host = (parts.hostname or "").lower()
-    domain = spec_for(provider).domain
-    return host == domain or host.endswith("." + domain) or host in extra_hosts
+    spec = spec_for(provider)
+    domain = spec.domain
+    return (
+        host == domain
+        or host.endswith("." + domain)
+        or host in spec.export_hosts
+        or host in extra_hosts
+    )
 
 
 def private_dir(path: Path) -> Path:

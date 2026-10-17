@@ -8,7 +8,7 @@ SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
   const visible = el => {
     const s = getComputedStyle(el);
     return s.visibility !== 'hidden' && s.display !== 'none' &&
-      el.getClientRects().length > 0;
+      [...el.getClientRects()].some(r => r.width > 0 && r.height > 0);
   };
   const clean = s => (s || '').replace(/\s+/g, ' ').trim().slice(0, 220);
   const selector =
@@ -16,12 +16,13 @@ SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
     '[role="textbox"],[role="combobox"],[role="checkbox"],[contenteditable="true"],'+
     '[role="menuitem"],[role="treeitem"],[role="option"],[role="radio"],'+
     '[role="link"],[onclick],[tabindex],summary,label';
-  const semantic = [...document.querySelectorAll(selector)].filter(el =>
-    el.tagName !== 'LABEL' || (!el.htmlFor && !el.querySelector('input,select,textarea')));
+  const semantic = [...document.querySelectorAll(selector)].filter(el => visible(el) &&
+    (el.tagName !== 'LABEL' || (!el.htmlFor && !el.querySelector('input,select,textarea'))));
   // Vue/custom widgets often attach listeners without an onclick attribute or
   // accessibility role. Visible pointer leaves can be clicked through bubbling.
   const pointerLeaves = [...document.querySelectorAll('body *')].filter(el =>
-    !el.closest(selector) && el.childElementCount === 0 && visible(el) &&
+    !semantic.some(parent => parent === el || parent.contains(el)) &&
+    el.childElementCount === 0 && visible(el) &&
     getComputedStyle(el).cursor === 'pointer' &&
     clean(el.innerText || el.getAttribute('aria-label') || el.getAttribute('title')));
   const candidates = [...semantic, ...pointerLeaves]

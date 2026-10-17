@@ -41,6 +41,15 @@ def test_extra_hosts_are_exact():
     assert not allowed_url("cnrds", "https://x.sso.university.edu/", ("sso.university.edu",))
 
 
+def test_cnrds_export_host_is_exact_and_provider_specific():
+    host = "cnrds-file.oss-cn-shanghai.aliyuncs.com"
+    assert allowed_url("cnrds", f"https://{host}/export.7z")
+    assert not allowed_url("csmar", f"https://{host}/export.7z")
+    assert not allowed_url("cnrds", f"https://x.{host}/export.7z")
+    assert not allowed_url("cnrds", "https://other.oss-cn-shanghai.aliyuncs.com/export.7z")
+    assert not allowed_url("cnrds", f"http://{host}/export.7z")
+
+
 def test_safe_url_strips_auth_query_and_fragment():
     assert safe_url("https://u:p@www.cnrds.com/data?token=secret#secret") == (
         "https://www.cnrds.com/data"

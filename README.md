@@ -130,7 +130,9 @@ to a hosted AI model leaves your computer. Export tools return paths and receipt
 contents. Check your institution's license and model arrangements before exposing restricted
 page content or asking another tool to read an export. A local model is an option.
 
-Provider HTTPS domains and their subdomains are allowed. Other requests, redirects and
+Provider HTTPS domains and their subdomains are allowed. CNRDS's exact export host
+`cnrds-file.oss-cn-shanghai.aliyuncs.com` is also allowed for CNRDS; other Aliyun buckets
+are excluded. Other requests, redirects and
 WebSockets are blocked. A required institution SSO or export CDN can be enabled **by the
 local user** with comma-separated exact hostnames in `CAMPUS_DATA_EXTRA_HOSTS`; this
 widens the trust boundary for both provider sessions. VPN portals that rewrite domains
@@ -142,7 +144,8 @@ CAPTCHA solving, fingerprint spoofing, quota splitting, account rotation, or bul
 Actions are serialized and spaced at least one second apart. This interval does not
 replace provider limits: stop if the service displays a restriction.
 
-The retained-file limit is 512 MiB **after transfer**; it is not a bandwidth cap. Archives
+The retained-file limit is 512 MiB **after transfer**; it is not a bandwidth cap. ZIP and 7z
+exports receive file-signature checks. Archives
 are retained without extraction. Files are not executed or automatically parsed. A checksum
 proves file integrity, not correct coverage, full-data entitlement, or freedom from malware.
 

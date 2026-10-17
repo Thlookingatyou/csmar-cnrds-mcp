@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from campus_data_mcp.browser import EXPORT_EXTENSIONS, _validate_and_hash_file
 from campus_data_mcp.config import CampusError
 
 from .conftest import CSV, controls, ref
@@ -164,3 +165,25 @@ async def test_custom_pointer_widget_with_framework_listener(bridge):
     snapshot = await bridge.open("cnrds")
     snapshot = await bridge.act("cnrds", ref(snapshot, "Custom catalogue tab"), "click")
     assert ref(snapshot, "Custom tab activated")
+
+
+async def test_zero_size_link_uses_its_visible_child(bridge):
+    snapshot = await bridge.open("cnrds")
+    matches = [c for c in controls(snapshot) if c["label"] == "Zero-box catalogue link"]
+    assert len(matches) == 1
+    assert matches[0]["tag"] == "span"
+    snapshot = await bridge.act("cnrds", matches[0]["ref"], "click")
+    assert "Zero-box link activated" in json.dumps(snapshot)
+
+
+def test_7z_export_requires_archive_signature(tmp_path):
+    assert ".7z" in EXPORT_EXTENSIONS
+    path = tmp_path / "export.7z"
+    content = b"7z\xbc\xaf\x27\x1c\x00\x04fixture"
+    path.write_bytes(content)
+    assert _validate_and_hash_file(path) == hashlib.sha256(content).hexdigest()
+    path.write_bytes(b"PK\x03\x04fixture")
+    assert _validate_and_hash_file(path) == hashlib.sha256(path.read_bytes()).hexdigest()
+    path.write_bytes(b"This is not an archive")
+    with pytest.raises(CampusError, match="7z/ZIP file signature"):
+        _validate_and_hash_file(path)

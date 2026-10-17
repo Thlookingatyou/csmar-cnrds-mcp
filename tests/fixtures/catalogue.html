@@ -5,6 +5,9 @@
 <button onclick="schoolLogin()">学校登录</button>
 <div id="status">Institution not selected</div>
 <span id="custom-widget" style="cursor:pointer">Custom catalogue tab</span>
+<a id="zero-box" href="#" style="display:block;width:0;height:0;overflow:visible;margin-bottom:30px">
+  <span style="display:inline-block;white-space:nowrap;cursor:pointer">Zero-box catalogue link</span>
+</a>
 <label>Username <input name="username" value="fixture-user"></label>
 <label>Password <input type="password" value="fixture-password"></label>
 <input type="hidden" name="token" value="fixture-hidden-token">
@@ -32,6 +35,10 @@
   <button onclick="location.href='/html-export'">Export expired-session HTML</button>
 </section>
 <script>
+document.getElementById('zero-box').addEventListener('click', event => {
+  event.preventDefault();
+  document.getElementById('status').innerText = 'Zero-box link activated';
+});
 document.getElementById('custom-widget').addEventListener('click', event => {
   event.target.innerText = 'Custom tab activated';
 });
