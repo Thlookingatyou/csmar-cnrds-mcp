@@ -50,7 +50,7 @@ filters, not an independently produced manual export.
 The GitHub Linux matrix tests Python 3.11 and 3.13. Its initial run passed on Python 3.11
 and caught an asynchronous popup-readiness race in the Python 3.13 test. The popup test
 now awaits the browser's page-opening event before inspecting the new tab. Check the
-[latest CI results](https://github.com/Thlookingatyou/campus-data-mcp/actions) for remote status.
+[latest CI results](https://github.com/Thlookingatyou/csmar-cnrds-mcp/actions) for remote status.
 Local execution required permission to launch Chromium outside the agent's process sandbox.
 
 ## Test layers

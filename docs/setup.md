@@ -29,11 +29,14 @@ Read the [feasibility assessment and sources](feasibility.md).
 
 ## Install
 
+The project was renamed from `campus-data-mcp`. Existing `campus-data` commands,
+Python module names and private storage paths remain compatible.
+
 Python 3.11+ and a desktop capable of running Chromium are required.
 
 ```sh
-git clone https://github.com/Thlookingatyou/campus-data-mcp.git
-cd campus-data-mcp
+git clone https://github.com/Thlookingatyou/csmar-cnrds-mcp.git
+cd csmar-cnrds-mcp
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
@@ -65,7 +68,7 @@ Configure an MCP client to start this process locally. Replace both absolute pat
 {
   "mcpServers": {
     "campus-data": {
-      "command": "/ABSOLUTE/PATH/campus-data-mcp/.venv/bin/python",
+      "command": "/ABSOLUTE/PATH/csmar-cnrds-mcp/.venv/bin/python",
       "args": ["-m", "campus_data_mcp.cli", "serve"],
       "env": {
         "CAMPUS_DATA_HOME": "/ABSOLUTE/PRIVATE/PATH/campus-data-state"

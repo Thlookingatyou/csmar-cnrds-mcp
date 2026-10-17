@@ -11,6 +11,11 @@ requires-python = ">=3.11"
 license = "MIT"
 dependencies = ["mcp>=1.30,<2", "playwright>=1.64,<2"]
 
+[project.urls]
+Homepage = "https://github.com/Thlookingatyou/csmar-cnrds-mcp"
+Documentation = "https://github.com/Thlookingatyou/csmar-cnrds-mcp/blob/main/docs/setup.md"
+Issues = "https://github.com/Thlookingatyou/csmar-cnrds-mcp/issues"
+
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "pytest-asyncio>=0.25,<2", "ruff>=0.9,<1"]
 
