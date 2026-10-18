@@ -29,6 +29,14 @@
    send file contents to another tool/model when the user's license and instructions allow it.
 10. `campus_close` after active downloads have finished.
 
+Custom controls include `icon_hint` (visible element classes), `unlabeled`, `dialog`
+(dialog heading) and `context` (the table row or nearby visible text for unlabeled icons).
+Use these to dismiss an ordinary tutorial or identify a prepared download. In a shared
+school download list, match the table and creation time to your own job before clicking
+its current ref; do not click another user's job. Dialog focus containers are excluded
+so their custom icons remain available as individual controls. Input values and hidden
+content are omitted from context, and common token strings are redacted.
+
 Refs expire whenever a tool returns a new snapshot. If ref A and ref B came from the same
 snapshot, acting on A expires B; find B in the new response. A stale reference produces
 an actionable error. Never guess CSS selectors, field codes, endpoints or subscription scope.

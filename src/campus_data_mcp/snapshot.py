@@ -11,20 +11,39 @@ SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
       [...el.getClientRects()].some(r => r.width > 0 && r.height > 0);
   };
   const clean = s => (s || '').replace(/\s+/g, ' ').trim().slice(0, 220);
-  const selector =
+  const textWithin = (root, limit = 700) => {
+    const chunks = [];
+    let length = 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode()) && length < limit) {
+      const el = node.parentElement;
+      if (!el || el.closest('script,style,noscript,input,textarea,[contenteditable="true"]') ||
+          !visible(el)) continue;
+      const value = clean(node.textContent);
+      if (value) { chunks.push(value); length += value.length + 1; }
+    }
+    return {text: chunks.join('\n').slice(0, limit), truncated: length >= limit};
+  };
+  const actionSelector =
     'a,button,input,select,textarea,[role="button"],[role="tab"],'+
     '[role="textbox"],[role="combobox"],[role="checkbox"],[contenteditable="true"],'+
     '[role="menuitem"],[role="treeitem"],[role="option"],[role="radio"],'+
-    '[role="link"],[onclick],[tabindex],summary,label';
+    '[role="link"],[onclick],summary,label';
+  const selector = actionSelector + ',[tabindex]';
   const semantic = [...document.querySelectorAll(selector)].filter(el => visible(el) &&
+    !el.matches('dialog,[role="dialog"],[role="alertdialog"]') &&
+    !(el.getAttribute('tabindex') === '-1' && !el.matches(actionSelector)) &&
     (el.tagName !== 'LABEL' || (!el.htmlFor && !el.querySelector('input,select,textarea'))));
-  // Vue/custom widgets often attach listeners without an onclick attribute or
-  // accessibility role. Visible pointer leaves can be clicked through bubbling.
-  const pointerLeaves = [...document.querySelectorAll('body *')].filter(el =>
-    !semantic.some(parent => parent === el || parent.contains(el)) &&
-    el.childElementCount === 0 && visible(el) &&
+  // Dialog focus containers are not actions and must not hide their inner icons.
+  // Framework listeners and CSS-only icons often have no text or inline handler.
+  const pointers = [...document.querySelectorAll('body *')].filter(el =>
+    (el instanceof HTMLElement || el instanceof SVGSVGElement) && visible(el) &&
     getComputedStyle(el).cursor === 'pointer' &&
-    clean(el.innerText || el.getAttribute('aria-label') || el.getAttribute('title')));
+    !semantic.some(parent => parent === el ||
+      (parent.matches(actionSelector) && parent.contains(el))));
+  const pointerLeaves = pointers.filter(el =>
+    !pointers.some(child => child !== el && el.contains(child)));
   const candidates = [...semantic, ...pointerLeaves]
     .filter(el => visible(el) && el.type !== 'hidden');
   const controls = candidates.slice(offset, offset + limit).map((el, i) => {
@@ -33,11 +52,30 @@ SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
     const labels = el.labels ? [...el.labels].map(x => x.innerText).join(' ') : '';
     const labelled = (el.getAttribute('aria-labelledby') || '').split(/\s+/)
       .map(id => document.getElementById(id)?.innerText || '').join(' ');
+    const label = clean(el.getAttribute('aria-label') || labelled || labels ||
+      (el.matches('input,textarea,[contenteditable="true"]') ? '' : el.innerText) ||
+      el.getAttribute('title') || el.getAttribute('alt') ||
+      el.querySelector('img[alt]')?.getAttribute('alt') || el.getAttribute('placeholder'));
+    const row = el.closest('tr,[role="row"]');
+    let context = row ? textWithin(row).text : '';
+    if (!row && !label) {
+      let parent = el.parentElement;
+      for (let depth = 0; parent && depth < 4 && !parent.matches('body,html');
+           depth++, parent = parent.parentElement) {
+        const nearby = textWithin(parent).text;
+        if (nearby) { context = nearby; break; }
+      }
+    }
+    const dialog = el.closest('dialog,[role="dialog"],[role="alertdialog"],.modal,.el-dialog');
+    const heading = dialog && [...dialog.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"]')]
+      .find(visible);
     return {ref, tag: el.tagName.toLowerCase(), type: el.type || '',
-      role: el.getAttribute('role') || '',
-      label: clean(el.getAttribute('aria-label') || labelled || labels ||
-        (el.matches('input,textarea,[contenteditable="true"]') ? '' : el.innerText) ||
-        el.getAttribute('title') || el.getAttribute('placeholder')),
+      role: el.getAttribute('role') || '', label,
+      unlabeled: !label,
+      icon_hint: clean(el.getAttribute('class')),
+      context,
+      dialog: dialog ? clean(dialog.getAttribute('aria-label') ||
+        (heading ? textWithin(heading, 220).text : textWithin(dialog, 220).text)) : '',
       placeholder: clean(el.getAttribute('placeholder')),
       name: clean((el.getAttribute('name') || el.id) + ' ' +
         (el.getAttribute('autocomplete') || '')),
@@ -46,21 +84,10 @@ SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
       options: el.tagName === 'SELECT' ? [...el.options].slice(0, 100)
         .map(o => ({label: clean(o.text), value: clean(o.value)})) : undefined};
   });
-  const chunks = [];
-  let length = 0;
-  const walker = document.createTreeWalker(document.body || document.documentElement,
-    NodeFilter.SHOW_TEXT);
-  let node;
-  while ((node = walker.nextNode()) && length < 16000) {
-    const el = node.parentElement;
-    if (!el || el.closest('script,style,noscript,input,textarea,[contenteditable="true"]') ||
-        !visible(el)) continue;
-    const value = clean(node.textContent);
-    if (value) { chunks.push(value); length += value.length + 1; }
-  }
-  return {text: chunks.join('\n').slice(0, 16000), controls,
+  const body = textWithin(document.body || document.documentElement, 16000);
+  return {text: body.text, controls,
     controls_total: candidates.length, control_offset: offset,
-    controls_truncated: candidates.length > offset + limit, text_truncated: length >= 16000};
+    controls_truncated: candidates.length > offset + limit, text_truncated: body.truncated};
 } """
 
 SENSITIVE_CONTROL = re.compile(

@@ -12,7 +12,7 @@ The project runs a browser on your computer and uses your campus network or inst
 
 Your institution must subscribe to the requested data, and your network must have access. Setup requires Python 3.11+, Chromium and a local MCP connection; follow the [setup guide](docs/setup.md). An agent with local command execution can help install it. Sharing the GitHub link alone does not enable database access.
 
-**Status: experimental.** Small real downloads from both providers have been verified on one authorized campus network, with browser assistance needed for some controls. Other institutions, specialty databases and fully unattended operation remain unverified. Available data depends on institutional subscriptions and provider permissions; applicable data licences still apply.
+**Status: experimental.** Small real downloads from both providers have been verified through MCP on one authorized campus network without manual browser interaction, including tutorial dismissal and final download icons. Other institutions and specialty databases remain unverified. Authentication challenges still require the user. Available data depends on institutional subscriptions and provider permissions; applicable data licences still apply.
 
 **Codex skill:** Install [`skills/csmar-cnrds`](skills/csmar-cnrds) with `$skill-installer`, then invoke `$csmar-cnrds` with your data request. See [Codex setup](docs/setup.md#codex-skill). The local MCP connector is still required.
 
@@ -24,7 +24,7 @@ Your institution must subscribe to the requested data, and your network must hav
 
 使用前，学校需已订阅相应数据库，且当前网络具备访问权限。电脑需安装 Python 3.11+ 和 Chromium，并按[安装与配置指南](docs/setup.md)连接智能体。具备本地命令执行能力的智能体可协助完成安装；仅发送 GitHub 链接不会自动启用数据库访问。
 
-**当前状态：实验性项目。** 已在一个获授权的校园网络中完成两个数据库的小规模真实下载验证，部分界面操作仍需要浏览器辅助。其他学校、专题数据库及完全无人值守的使用方式尚未验证。实际可用数据取决于学校订阅和平台权限，使用时请遵守相应的数据许可。
+**当前状态：实验性项目。** 已在一个获授权的校园网络中，通过 MCP 完成两个数据库的小规模真实下载验证，包括关闭新手引导和点击最终下载图标，测试中无需手动操作浏览器。其他学校和专题数据库尚未验证；身份验证等环节仍需用户完成。实际可用数据取决于学校订阅和平台权限，使用时请遵守相应的数据许可。
 
 **Codex 技能：** 使用 `$skill-installer` 安装 [`skills/csmar-cnrds`](skills/csmar-cnrds)，然后用 `$csmar-cnrds` 提出数据需求。详见 [Codex 配置](docs/setup.md#codex-skill)；仍需配置本地 MCP 连接。
 

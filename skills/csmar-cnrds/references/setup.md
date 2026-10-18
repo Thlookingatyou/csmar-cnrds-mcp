@@ -86,9 +86,12 @@ login again in a new session. Any SSO, SMS or CAPTCHA belongs with the user in t
 The project offers no password argument and no access bypass. Diagnose an unrecognized
 campus IP or unavailable subscription from the provider's visible response.
 
-Basic-table exports have been verified on one campus network. Some tutorial controls and
-CNRDS's final download icon required general browser assistance; if those tools are absent,
-request that specific human action instead of claiming fully unattended operation.
+Basic-table exports have been verified on one campus network using only the connector's
+MCP tools. Both CSMAR's first-use tutorial and CNRDS's final download icon are now exposed
+as current refs. `context` supplies the download row or nearby visible text, `dialog`
+supplies its heading, and `icon_hint` helps identify unlabeled controls. Update an older
+runtime with `git pull --ff-only`, reinstall with its Python and restart its MCP process
+before expecting the new metadata. Authentication challenges still belong with the user.
 
 Project setup guide: https://github.com/Thlookingatyou/csmar-cnrds-mcp/blob/main/docs/setup.md
 

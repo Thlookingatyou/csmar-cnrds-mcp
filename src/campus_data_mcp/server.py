@@ -65,6 +65,8 @@ def build_server(bridge: BrowserBridge | None = None) -> FastMCP:
 
         Returns current control refs, login/access hints and downloads. Input values,
         hidden fields, cookies and storage are omitted. Each call expires older refs.
+        Custom and unlabeled icons include icon_hint, context and dialog metadata.
+        Use the surrounding row to select your own export job in shared download lists.
         Check subscription/sample restrictions on the page before requesting exports.
         Each frame returns up to 250 controls; control_offset pages through larger sets.
         """

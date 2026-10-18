@@ -187,3 +187,47 @@ def test_7z_export_requires_archive_signature(tmp_path):
     path.write_bytes(b"This is not an archive")
     with pytest.raises(CampusError, match="7z/ZIP file signature"):
         _validate_and_hash_file(path)
+
+
+@pytest.mark.parametrize("provider", ["csmar", "cnrds"])
+async def test_css_only_tutorial_close_is_actionable(bridge, provider):
+    host = "data.csmar.com" if provider == "csmar" else "www.cnrds.com"
+    snapshot = await bridge.open(provider, f"https://{host}/widgets")
+    close = next(c for c in controls(snapshot) if c["name"] == "guide-close")
+    assert close["unlabeled"]
+    assert close["icon_hint"] == "css-close"
+    assert close["dialog"] == "Getting started tutorial"
+    assert "Getting started tutorial" in close["context"]
+    assert not any(c["role"] == "dialog" for c in controls(snapshot))
+    snapshot = await bridge.act(provider, close["ref"], "click")
+    assert "Tutorial closed" in json.dumps(snapshot)
+    assert not any(c["name"] == "guide-close" for c in controls(snapshot))
+
+
+@pytest.mark.parametrize("provider", ["csmar", "cnrds"])
+async def test_dialog_download_icon_is_selected_by_its_own_row(bridge, provider):
+    host = "data.csmar.com" if provider == "csmar" else "www.cnrds.com"
+    snapshot = await bridge.open(provider, f"https://{host}/widgets")
+    icons = [c for c in controls(snapshot) if c["label"] == "\ue618"]
+    assert len(icons) == 2
+    own = next(c for c in icons if "My request" in c["context"])
+    assert "2024 only" in own["context"]
+    assert own["dialog"] == "Download list"
+    assert "fixture-private" not in own["context"]
+    assert "fixture-hidden-row-secret" not in own["context"]
+    assert "fixture-row-token" not in own["context"]
+    result = await bridge.export(provider, own["ref"], "My request; 2024 only; fixture CSV", 3)
+    receipt = result["downloads"][0]
+    assert receipt["status"] == "saved"
+    assert Path(receipt["path"]).read_bytes() == CSV
+    assert "Wrong job clicked" not in json.dumps(result)
+
+
+async def test_svg_pointer_is_actionable_without_duplicating_button_children(bridge):
+    snapshot = await bridge.open("cnrds", "https://www.cnrds.com/widgets")
+    svg = [c for c in controls(snapshot) if c["tag"] == "svg"]
+    assert len(svg) == 1
+    assert svg[0]["unlabeled"]
+    assert svg[0]["icon_hint"] == "svg-icon"
+    snapshot = await bridge.act("cnrds", svg[0]["ref"], "click")
+    assert "SVG action completed" in json.dumps(snapshot)

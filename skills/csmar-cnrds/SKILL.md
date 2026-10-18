@@ -52,11 +52,13 @@ For a setup-only request, verify the connection without creating a data-export j
 
 - Every inspection or action returning a snapshot expires earlier control references.
   Use the fresh references; a SPA may require another inspection after loading settles.
-- CSMAR can display a first-use notice/tutorial. CNRDS's final download icon may be absent
-  from the MCP snapshot. Use the client's available browser/computer tools for ordinary
-  visible controls, or let the user complete that specific step. The connector still
-  captures downloads triggered in its own browser. Never claim MCP-only completion when
-  a fallback was needed.
+- CSMAR can display a first-use notice/tutorial. The connector exposes CSS-only close
+  controls and CNRDS download icons through current refs. Use `icon_hint`, `unlabeled`,
+  `dialog` and `context` to identify them. Context includes a download's row and creation
+  time; select only this request's job. The tested tutorial and final download steps work
+  through MCP without manual browser interaction. For an unrepresented control, first
+  check control pagination and inspect again; use available browser tools or ask for that
+  specific human step only if it remains inaccessible. Report any fallback actually used.
 - Do not fabricate field codes, hidden endpoints or subscription status. A visible catalogue,
   preview, institution label or saved export establishes only what was actually observed.
   Basic-table success does not establish access to specialty products or other institutions.

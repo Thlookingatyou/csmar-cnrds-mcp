@@ -82,8 +82,8 @@ Then invoke it in the next turn:
 The skill is normally available on the next turn. If it does not appear, restart Codex.
 Its [connection reference](../skills/csmar-cnrds/references/setup.md) contains Codex CLI
 and TOML examples. A newly configured MCP server may also require a client reload or
-restart before its tools appear. Human verification and some browser controls may still
-require assistance.
+restart before its tools appear. The tested tutorial and final-download controls now work
+through MCP; authentication challenges still require the user.
 
 For manual local installation, copy only the `csmar-cnrds` skill folder into your Codex
 user skill directory. Current Codex documentation lists `~/.agents/skills`; the bundled
@@ -124,6 +124,20 @@ Example request to your agent:
 > Report the file location and any access or coverage limitations.
 
 See [the agent workflow](agent-workflow.md) for a precise tool sequence.
+
+## Update an existing installation
+
+In the existing source checkout, pull the latest changes and reinstall with that
+installation's Python, then restart the MCP connector so it loads the updated code:
+
+```sh
+git pull --ff-only
+.venv/bin/python -m pip install -e .
+```
+
+Use the actual virtual environment path; on Windows use `.venv\Scripts\python.exe`.
+Update an installed Codex skill from the repository's `skills/csmar-cnrds` folder as well.
+Keep private browser profiles and downloaded files in their existing state directory.
 
 ## Tools
 

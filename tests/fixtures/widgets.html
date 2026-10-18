@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Provider widget fixtures</title>
+<style>
+.css-close {cursor:pointer; width:24px; height:24px;
+  background:linear-gradient(45deg, transparent 45%, black 45% 55%, transparent 55%),
+    linear-gradient(-45deg, transparent 45%, black 45% 55%, transparent 55%);}
+.iconfont {cursor:pointer; display:inline-block; width:24px; height:24px;}
+</style>
+<body>
+<div id="status">Ready</div>
+<div id="tutorial" role="dialog" tabindex="-1" aria-labelledby="tutorial-title">
+  <h2 id="tutorial-title">Getting started tutorial</h2>
+  <div class="css-close" id="guide-close"></div>
+</div>
+<div role="dialog" tabindex="-1" aria-labelledby="jobs-title">
+  <h2 id="jobs-title">Download list</h2>
+  <table><thead><tr><th>Job</th><th>Scope</th><th>Status</th><th>Download</th></tr></thead>
+  <tbody>
+    <tr><td>Other request</td><td>1995–2023</td><td>Ready</td>
+      <td><i class="iconfont old-job">&#xe618;</i></td></tr>
+    <tr><td>My request</td><td>2024 only</td><td>Ready</td>
+      <td><i class="iconfont my-job">&#xe618;</i></td>
+      <td><input value="fixture-private-input"><textarea>fixture-private-textarea</textarea>
+        <span contenteditable="true">fixture-private-editable</span>
+        <span hidden>fixture-hidden-row-secret</span><span>token=fixture-row-token</span></td></tr>
+  </tbody></table>
+</div>
+<button id="regular-button">Regular control <svg width="12" height="12"><path d="M0 0L12 12"/></svg></button>
+<span id="svg-action" style="cursor:pointer"><svg width="20" height="20" class="svg-icon"><path d="M0 0H20V20H0Z"/></svg></span>
+<script>
+document.getElementById('guide-close').addEventListener('click', () => {
+  document.getElementById('tutorial').hidden = true;
+  document.getElementById('status').textContent = 'Tutorial closed';
+});
+document.querySelector('.my-job').addEventListener('click', () => { location.href='/export'; });
+document.querySelector('.old-job').addEventListener('click', () => {
+  document.getElementById('status').textContent = 'Wrong job clicked';
+});
+document.getElementById('svg-action').addEventListener('click', () => {
+  document.getElementById('status').textContent = 'SVG action completed';
+});
+</script>
+</body></html>

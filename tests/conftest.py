@@ -7,6 +7,7 @@ from campus_data_mcp.browser import BrowserBridge
 from campus_data_mcp.config import Settings, allowed_url
 
 CATALOGUE = (Path(__file__).parent / "fixtures" / "catalogue.html").read_text()
+WIDGETS = (Path(__file__).parent / "fixtures" / "widgets.html").read_text()
 CSV = b"stock_code,date,closing_price\n000001,2024-01-02,10.0\n"
 
 
@@ -62,6 +63,8 @@ async def bridge(tmp_path):
             await route.fulfill(
                 body="<p>IP超出限定范围</p>", content_type="text/html; charset=utf-8"
             )
+        elif path == "/widgets":
+            await route.fulfill(body=WIDGETS, content_type="text/html")
         elif path == "/many":
             await route.fulfill(
                 body="".join(f"<button>Item {i}</button>" for i in range(300)),
