@@ -14,7 +14,7 @@ CSV = b"stock_code,date,closing_price\n000001,2024-01-02,10.0\n"
 @pytest_asyncio.fixture
 async def bridge(tmp_path):
     item = BrowserBridge(
-        Settings(home=tmp_path / "state", headless=True, min_interval=0, timeout_ms=3000)
+        Settings(home=tmp_path / "state", min_interval=0, timeout_ms=3000)
     )
     original_route = item._route
 

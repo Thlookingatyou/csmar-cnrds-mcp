@@ -41,6 +41,7 @@ For a new connection, replace both example paths with actual **absolute paths**:
 ```sh
 codex mcp add campus-data \
   --env CAMPUS_DATA_HOME=/ABSOLUTE/PRIVATE/PATH/campus-data-state \
+  --env CAMPUS_DATA_HEADLESS=1 \
   -- /ABSOLUTE/PATH/csmar-cnrds-mcp/.venv/bin/python -m campus_data_mcp.cli serve
 ```
 
@@ -58,6 +59,7 @@ args = ["-m", "campus_data_mcp.cli", "serve"]
 
 [mcp_servers.campus-data.env]
 CAMPUS_DATA_HOME = "/ABSOLUTE/PRIVATE/PATH/campus-data-state"
+CAMPUS_DATA_HEADLESS = "1"
 ```
 
 Merge only this server entry; preserve other client settings and existing server entries.
@@ -71,7 +73,13 @@ not prove that tools loaded. If the current chat cannot reload MCP tools, explai
 remaining reload/restart step and resume the user's data task when the tools are available.
 Do not report setup complete before the connection has been checked.
 
-## Institutional access and browser assistance
+## Background mode and interactive login
+
+The connector runs without a browser window by default. Keep `CAMPUS_DATA_HEADLESS=1`
+for background work. Set it to `0` and restart the connector only when the user wants
+visible operation or needs interactive troubleshooting. The snapshot's `headless` field
+reports the current mode. The standalone `login` command always opens a visible browser.
+Do not change to visible mode just to click ordinary tutorial or download controls.
 
 For an initial interactive check, use the configured environment's Python:
 
@@ -80,8 +88,9 @@ python -m campus_data_mcp.cli login csmar
 python -m campus_data_mcp.cli login cnrds
 ```
 
-Use the same `CAMPUS_DATA_HOME` as the MCP server. Close the standalone login browser
-before starting another process that uses its profile. CNRDS may require clicking school
+Use the same `CAMPUS_DATA_HOME` as the MCP server. Finish active downloads and close
+the provider's MCP session before running `login`; close the standalone login browser
+before reopening it through MCP. CNRDS may require clicking school
 login again in a new session. Any SSO, SMS or CAPTCHA belongs with the user in the browser.
 The project offers no password argument and no access bypass. Diagnose an unrecognized
 campus IP or unavailable subscription from the provider's visible response.

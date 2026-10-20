@@ -83,6 +83,22 @@ now awaits the browser's page-opening event before inspecting the new tab. Check
 [latest CI results](https://github.com/Thlookingatyou/csmar-cnrds-mcp/actions) for remote status.
 Local execution required permission to launch Chromium outside the agent's process sandbox.
 
+## Background default — 2026-10-20
+
+Version 0.1.2 runs the connector headless by default. `CAMPUS_DATA_HEADLESS=0` opts into
+a visible connector session; the standalone `login` command always opens a visible window
+for personal authentication. Snapshots report `headless` and provide mode-appropriate
+verification instructions. Existing private profiles and download paths remain unchanged.
+
+- **55 local tests passed**, with Ruff passing. Browser fixtures now use the default
+  setting rather than an explicit headless override, covering search, filters, tutorial
+  controls, prepared downloads and file saving. Tests also cover the environment override
+  and the visible-login exception.
+- A fresh headless browser loaded both real public homepages: CSMAR exposed two frames
+  and 95 controls; CNRDS exposed one frame and 13 controls. No browser window was opened.
+  This was a public-page check; no new institutional export was attempted. The earlier
+  campus export results above remain separate evidence.
+
 ## Test layers
 
 - Unit tests: URL scope, authentication-field classification, redaction and access hints.

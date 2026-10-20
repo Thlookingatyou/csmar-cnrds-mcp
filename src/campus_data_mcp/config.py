@@ -91,7 +91,7 @@ class Settings:
             .resolve()
         )
     )
-    headless: bool = False
+    headless: bool = True
     extra_hosts: tuple[str, ...] = ()
     min_interval: float = 1.0
     timeout_ms: int = 15000
@@ -106,4 +106,4 @@ class Settings:
         )
         if any(not re.fullmatch(r"[a-z0-9.-]+", h) for h in hosts):
             raise CampusError("Extra hosts must be exact hostnames, without schemes or wildcards.")
-        return cls(headless=os.getenv("CAMPUS_DATA_HEADLESS", "0") == "1", extra_hosts=hosts)
+        return cls(headless=os.getenv("CAMPUS_DATA_HEADLESS", "1") == "1", extra_hosts=hosts)

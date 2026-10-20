@@ -14,7 +14,9 @@ or institution-supported VPN; a remote cloud browser can have a different networ
 Use the installed CSMAR-CNRDS MCP connector's `campus_*` tools. Tool names may have a
 client-added namespace. If the tools are missing, read [setup](references/setup.md),
 install or reuse the local runtime, and configure the connection as supported by the client.
-A skill supplies instructions; it does not itself install Chromium or expose MCP tools.
+The connector runs hidden by default. Keep background mode for ordinary queries and
+exports unless the user requests a visible browser. A skill supplies instructions; it
+does not itself install Chromium or expose MCP tools.
 Distinguish configuration saved from tools actually available in the current session.
 For a setup-only request, verify the connection without creating a data-export job.
 
@@ -25,7 +27,10 @@ For a setup-only request, verify the connection without creating a data-export j
    supply unknown vendor table names. Clarify missing choices that materially change scope.
 2. Open `csmar` or `cnrds` with `campus_open`. CSMAR may recognize the institution
    automatically. Use `campus_school_login` when a school-login control is visible.
-   Authentication or CAPTCHA requiring a person belongs in the visible browser.
+   If personal login or CAPTCHA requires a person, finish active downloads, close that
+   provider, and use `campus-data login <provider>` with the same `CAMPUS_DATA_HOME`.
+   This opens a visible browser; close it before reopening the provider through MCP.
+   Do not tell the user to interact with a hidden window.
 3. Search with `campus_search`. If Enter does not submit, inspect and click the observed
    search button. Inspect table descriptions, available fields, units, date coverage and
    subscription/sample indicators before choosing the table.

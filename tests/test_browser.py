@@ -14,6 +14,7 @@ from .conftest import CSV, controls, ref
 async def test_school_login_search_filters_and_export(bridge, provider):
     snapshot = await bridge.open(provider)
     assert controls(snapshot)
+    assert snapshot["headless"] is True
     snapshot = await bridge.school_login(provider)
     assert "Synthetic University" in json.dumps(snapshot)
     snapshot = await bridge.search(provider, "daily trading")
@@ -60,7 +61,7 @@ async def test_snapshots_omit_hidden_fields_scripts_and_input_values(bridge):
 async def test_agent_cannot_fill_authentication_fields(bridge):
     snapshot = await bridge.open("cnrds")
     username = next(c["ref"] for c in controls(snapshot) if c["name"].strip() == "username")
-    with pytest.raises(CampusError, match="manual-only"):
+    with pytest.raises(CampusError, match="campus-data login cnrds"):
         await bridge.act("cnrds", username, "fill", "should-not-fill")
 
 

@@ -8,7 +8,7 @@
 
 **Let AI agents search and download research data through your institution’s existing CSMAR and CNRDS access, without sharing a database username or password with the agent.**
 
-The project runs a browser on your computer and uses your campus network or institution-supported VPN. Connect it to an agent that supports local MCP servers to search catalogues, select tables and filters, and save exports locally. Agents with file-reading tools can also read and analyse the downloaded data.
+The project runs a hidden browser in the background on your computer and uses your campus network or institution-supported VPN. A visible login mode is available when verification is needed. Connect it to an agent that supports local MCP servers to search catalogues, select tables and filters, and save exports locally. Agents with file-reading tools can also read and analyse the downloaded data.
 
 Your institution must subscribe to the requested data, and your network must have access. Setup requires Python 3.11+, Chromium and a local MCP connection; follow the [setup guide](docs/setup.md). An agent with local command execution can help install it. Sharing the GitHub link alone does not enable database access.
 
@@ -20,7 +20,7 @@ Your institution must subscribe to the requested data, and your network must hav
 
 **让 AI 智能体使用学校已有的 CSMAR（国泰安）和 CNRDS（中国研究数据服务平台）访问权限，检索并下载研究数据，无需向智能体提供数据库账号和密码。**
 
-本项目在你的电脑上运行浏览器，通过校园网或学校支持的 VPN 使用机构授权。接入支持本地 MCP 的 AI 智能体后，可以让它搜索数据目录、选择数据表和筛选条件，并将导出文件保存到本地。智能体若具备本地文件读取工具，还可以继续读取和分析下载的数据。
+本项目默认在你的电脑后台运行隐藏浏览器，通过校园网或学校支持的 VPN 使用机构授权；需要身份验证时，可切换到可见登录模式。接入支持本地 MCP 的 AI 智能体后，可以让它搜索数据目录、选择数据表和筛选条件，并将导出文件保存到本地。智能体若具备本地文件读取工具，还可以继续读取和分析下载的数据。
 
 使用前，学校需已订阅相应数据库，且当前网络具备访问权限。电脑需安装 Python 3.11+ 和 Chromium，并按[安装与配置指南](docs/setup.md)连接智能体。具备本地命令执行能力的智能体可协助完成安装；仅发送 GitHub 链接不会自动启用数据库访问。
 

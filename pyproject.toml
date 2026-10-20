@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "campus-data-mcp"
-version = "0.1.1"
+version = "0.1.2"
 description = "Local, password-free browser tools for authorized CSMAR and CNRDS research"
 readme = "README.md"
 requires-python = ">=3.11"

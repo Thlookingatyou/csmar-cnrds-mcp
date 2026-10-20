@@ -55,6 +55,7 @@ def build_server(bridge: BrowserBridge | None = None) -> FastMCP:
         """Open the local provider browser. Optional URL must belong to that provider.
 
         Reuses a dedicated private profile; never opens your everyday browser profile.
+        Runs hidden by default; CAMPUS_DATA_HEADLESS=0 enables a visible browser.
         CSMAR may log in automatically on campus. For CNRDS try campus_school_login.
         """
         return await invoke(browser.open(provider, url))

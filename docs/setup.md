@@ -105,7 +105,8 @@ Configure an MCP client to start this process locally. Replace both absolute pat
       "command": "/ABSOLUTE/PATH/csmar-cnrds-mcp/.venv/bin/python",
       "args": ["-m", "campus_data_mcp.cli", "serve"],
       "env": {
-        "CAMPUS_DATA_HOME": "/ABSOLUTE/PRIVATE/PATH/campus-data-state"
+        "CAMPUS_DATA_HOME": "/ABSOLUTE/PRIVATE/PATH/campus-data-state",
+        "CAMPUS_DATA_HEADLESS": "1"
       }
     }
   }
@@ -191,8 +192,15 @@ local user** with comma-separated exact hostnames in `CAMPUS_DATA_EXTRA_HOSTS`; 
 widens the trust boundary for both provider sessions. VPN portals that rewrite domains
 need explicit configuration and may not work. Never disable TLS verification.
 
-`CAMPUS_DATA_HEADLESS=1` is available for automated testing after access is established;
-the default visible browser makes human verification possible. There is no automatic
+The connector runs **hidden in the background by default** (`CAMPUS_DATA_HEADLESS=1`).
+It opens no browser window and does not move your system cursor. Set
+`CAMPUS_DATA_HEADLESS=0` and restart the connector if you want a visible browser for
+inspection. `campus-data login csmar` and `campus-data login cnrds` always open a visible
+browser for personal login or verification, even when the background default is enabled.
+Finish active downloads and close that provider's MCP session before using the login
+command with the same `CAMPUS_DATA_HOME`; close the login window before reopening it
+through MCP. School/IP login can run in background mode when the provider permits it.
+There is no automatic
 CAPTCHA solving, fingerprint spoofing, quota splitting, account rotation, or bulk crawler.
 Actions are serialized and spaced at least one second apart. This interval does not
 replace provider limits: stop if the service displays a restriction.

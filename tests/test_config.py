@@ -1,6 +1,6 @@
 import pytest
 
-from campus_data_mcp.config import CampusError, allowed_url, safe_url, spec_for
+from campus_data_mcp.config import CampusError, Settings, allowed_url, safe_url, spec_for
 from campus_data_mcp.snapshot import access_observation, is_sensitive, redact
 
 
@@ -92,3 +92,13 @@ def test_access_observations_never_certify_entitlement():
     assert observed["hint"] == "signed_in_observed"
     assert observed["entitlement"] == "unverified"
     assert access_observation("IP超出限定范围", [])["hint"] == "ip_not_authorized"
+
+
+@pytest.mark.parametrize("value,hidden", [(None, True), ("1", True), ("0", False)])
+def test_background_default_and_visible_override(monkeypatch, value, hidden):
+    if value is None:
+        monkeypatch.delenv("CAMPUS_DATA_HEADLESS", raising=False)
+        assert Settings().headless
+    else:
+        monkeypatch.setenv("CAMPUS_DATA_HEADLESS", value)
+    assert Settings.from_env().headless is hidden
