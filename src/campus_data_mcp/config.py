@@ -41,6 +41,10 @@ PROVIDERS: dict[str, ProviderSpec] = {
 class CampusError(Exception):
     """An actionable error whose message is safe to return to an agent."""
 
+    def __init__(self, message: str, *, code: str = "connector_error"):
+        super().__init__(message)
+        self.code = code
+
 
 def spec_for(provider: str) -> ProviderSpec:
     try:
@@ -95,6 +99,10 @@ class Settings:
     extra_hosts: tuple[str, ...] = ()
     min_interval: float = 1.0
     timeout_ms: int = 15000
+    operation_timeout_s: float = 45
+    lock_timeout_s: float = 2
+    inspection_timeout_s: float = 8
+    frame_timeout_s: float = 3
     max_file_bytes: int = 512 * 1024 * 1024
 
     @classmethod

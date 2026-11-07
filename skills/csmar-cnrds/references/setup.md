@@ -71,7 +71,12 @@ After configuration, verify the server can initialize and exposes `campus_open`,
 `campus_export`, `campus_downloads` and `campus_close`. A configuration listing alone does
 not prove that tools loaded. If the current chat cannot reload MCP tools, explain the
 remaining reload/restart step and resume the user's data task when the tools are available.
-Do not report setup complete before the connection has been checked.
+Do not report setup complete before the connection has been checked. Use one persistent
+connector process per profile; do not launch a fresh server for each tool call. Browser
+operations return within a 45-second deadline; allow a longer client tool timeout if the
+client supports it (for example, 75 seconds). If no reply arrives, distinguish startup or
+transport failures from structured `operation_timeout`/`connector_busy` replies. Preserve
+the diagnostic code, request ID and elapsed time rather than reinstalling blindly.
 
 ## Background mode and interactive login
 

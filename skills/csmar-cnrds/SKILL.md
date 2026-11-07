@@ -53,6 +53,20 @@ For a setup-only request, verify the connection without creating a data-export j
    the session left open. Files remain local; current-process download lists are not a
    complete history of earlier exports.
 
+## Timeouts and partial results
+
+Issue browser calls sequentially; parallel actions can invalidate each other's refs and
+receive `connector_busy`. Wait for the active browser call; `campus_downloads` can check
+receipts independently. On `operation_timeout`, inspect the page and existing jobs before
+repeating an export: its click may already have succeeded. Never automatically replay it.
+If `page_state` is `loading_or_empty`, inspect again after the app renders; this is not
+an absent MCP reply. If `inspection_complete` is false, use `warnings` to distinguish an unresponsive frame
+from a truly absent control or unavailable table. Reopen a closed browser with
+`campus_open` when needed; a timeout alone is not a reason to switch to visible mode,
+reinstall the runtime or restart a transfer. Include `code`, `request_id` and `elapsed_ms`
+in a failure report. If no tool reply arrives at all, check client startup/tool diagnostics
+and the configured executable/profile; don't attribute the failure to model capability.
+
 ## Fragile interface behavior
 
 - Every inspection or action returning a snapshot expires earlier control references.

@@ -5,13 +5,20 @@ import re
 # We omit all input values, hidden controls, scripts, storage and HTML source.
 # References are random, ephemeral IDs, scoped to the latest provider inspection.
 SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
+  const visibility = new WeakMap();
   const visible = el => {
+    if (visibility.has(el)) return visibility.get(el);
     const s = getComputedStyle(el);
-    return s.visibility !== 'hidden' && s.display !== 'none' &&
+    const result = s.visibility !== 'hidden' && s.display !== 'none' &&
       [...el.getClientRects()].some(r => r.width > 0 && r.height > 0);
+    visibility.set(el, result);
+    return result;
   };
   const clean = s => (s || '').replace(/\s+/g, ' ').trim().slice(0, 220);
+  const textCache = new WeakMap();
   const textWithin = (root, limit = 700) => {
+    const cached = textCache.get(root);
+    if (cached && cached.limit === limit) return cached.result;
     const chunks = [];
     let length = 0;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -23,7 +30,9 @@ SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
       const value = clean(node.textContent);
       if (value) { chunks.push(value); length += value.length + 1; }
     }
-    return {text: chunks.join('\n').slice(0, limit), truncated: length >= limit};
+    const result = {text: chunks.join('\n').slice(0, limit), truncated: length >= limit};
+    textCache.set(root, {limit, result});
+    return result;
   };
   const actionSelector =
     'a,button,input,select,textarea,[role="button"],[role="tab"],'+
@@ -37,13 +46,31 @@ SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
     (el.tagName !== 'LABEL' || (!el.htmlFor && !el.querySelector('input,select,textarea'))));
   // Dialog focus containers are not actions and must not hide their inner icons.
   // Framework listeners and CSS-only icons often have no text or inline handler.
+  const semanticSet = new Set(semantic);
+  const actionSet = new Set(semantic.filter(el => el.matches(actionSelector)));
+  const covered = new WeakMap();
+  const hasActionAncestor = el => {
+    if (!el) return false;
+    if (covered.has(el)) return covered.get(el);
+    const value = actionSet.has(el) || hasActionAncestor(el.parentElement);
+    covered.set(el, value);
+    return value;
+  };
   const pointers = [...document.querySelectorAll('body *')].filter(el =>
-    (el instanceof HTMLElement || el instanceof SVGSVGElement) && visible(el) &&
-    getComputedStyle(el).cursor === 'pointer' &&
-    !semantic.some(parent => parent === el ||
-      (parent.matches(actionSelector) && parent.contains(el))));
-  const pointerLeaves = pointers.filter(el =>
-    !pointers.some(child => child !== el && el.contains(child)));
+    (el instanceof HTMLElement || el instanceof SVGSVGElement) &&
+    !semanticSet.has(el) && !hasActionAncestor(el.parentElement) && visible(el) &&
+    getComputedStyle(el).cursor === 'pointer');
+  const pointerSet = new Set(pointers);
+  const nonLeaves = new Set();
+  const visited = new Set();
+  for (const el of pointers) {
+    for (let parent = el.parentElement; parent && !visited.has(parent);
+         parent = parent.parentElement) {
+      visited.add(parent);
+      if (pointerSet.has(parent)) nonLeaves.add(parent);
+    }
+  }
+  const pointerLeaves = pointers.filter(el => !nonLeaves.has(el));
   const candidates = [...semantic, ...pointerLeaves]
     .filter(el => visible(el) && el.type !== 'hidden');
   const controls = candidates.slice(offset, offset + limit).map((el, i) => {

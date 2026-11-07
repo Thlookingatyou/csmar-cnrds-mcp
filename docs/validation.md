@@ -99,6 +99,35 @@ verification instructions. Existing private profiles and download paths remain u
   This was a public-page check; no new institutional export was attempted. The earlier
   campus export results above remain separate evidence.
 
+## Timeout reliability — 2026-11-07
+
+Version 0.1.3 addresses connector-side failure modes found during investigation of reported
+“timed out/no response” errors. No matching historical client logs were available locally,
+so these changes do not establish the cause of each past incident or a model-specific fault.
+
+- Browser operations now have a 45-second deadline and a two-second lock-queue limit.
+  Contention returns `connector_busy` rather than waiting indefinitely. Receipt checks
+  do not use the browser-operation lock.
+- Frame inspection has individual and aggregate deadlines and reports partial results
+  explicitly. DOM scanning replaces repeated all-control/ancestor comparisons with cached
+  lookups and caches repeated visibility and row-text reads.
+- Navigation no longer waits for all images. Empty single-page apps get a brief initial
+  render wait, and `page_state` distinguishes empty/loading content from a missing reply.
+- Cancellation and timeout release the operation lock. Submitted exports are not replayed;
+  already-started downloads can continue while the server remains running. Export polling
+  reserves time to inspect the result and return a reply.
+- Closed tabs are removed, explicitly closed browser contexts can be reopened, and shutdown
+  waits are bounded. Errors include safe diagnostic IDs, codes and elapsed times, with
+  matching stderr messages that omit query text, credentials and raw URLs.
+
+**66 local tests passed; Ruff and skill validation passed.** New regressions use real
+Chromium with synthetic responses for stalled image requests, unresponsive frames, shared
+lock contention, cancellation, export receipt survival, closed-browser recovery, initial SPA
+rendering and a 1,500-row pointer-control catalogue. A real stdio MCP test verifies that a
+stalled operation returns a diagnostic and the connection serves the next request. No new
+licensed export or campus-network acceptance was performed for this release. Client startup,
+transport configuration and client-imposed shorter deadlines still require their own diagnostics.
+
 ## Test layers
 
 - Unit tests: URL scope, authentication-field classification, redaction and access hints.

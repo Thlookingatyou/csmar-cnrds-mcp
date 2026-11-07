@@ -64,6 +64,7 @@ class Session:
     tasks: set[asyncio.Task] = field(default_factory=set)
     blocked: list[str] = field(default_factory=list)
     query_note: str = ""
+    closed: bool = False
 
 
 class BrowserBridge:
@@ -76,14 +77,32 @@ class BrowserBridge:
 
     @asynccontextmanager
     async def operation(self):
-        async with self._lock:
-            delay = self.settings.min_interval - (time.monotonic() - self._last_action)
-            if delay > 0:
-                await asyncio.sleep(delay)
-            try:
+        try:
+            await asyncio.wait_for(self._lock.acquire(), timeout=self.settings.lock_timeout_s)
+        except TimeoutError:
+            raise CampusError(
+                "Another browser operation is running. Wait for its reply before issuing "
+                "another browser action. campus_downloads can still check file receipts.",
+                code="connector_busy",
+            ) from None
+        try:
+            async with asyncio.timeout(self.settings.operation_timeout_s):
+                delay = self.settings.min_interval - (time.monotonic() - self._last_action)
+                if delay > 0:
+                    await asyncio.sleep(delay)
                 yield
-            finally:
-                self._last_action = time.monotonic()
+        except TimeoutError:
+            for session in self.sessions.values():
+                session.refs.clear()
+            raise CampusError(
+                "The browser operation exceeded its deadline. Its outcome may be unknown. "
+                "Inspect the page and check campus_downloads and the provider's job list "
+                "before submitting another export. No action was automatically retried.",
+                code="operation_timeout",
+            ) from None
+        finally:
+            self._last_action = time.monotonic()
+            self._lock.release()
 
     def _session(self, provider: str) -> Session:
         spec_for(provider)
@@ -106,7 +125,9 @@ class BrowserBridge:
     async def _launch(self, provider: str) -> Session:
         spec_for(provider)
         if provider in self.sessions:
-            return self.sessions[provider]
+            if not self.sessions[provider].closed:
+                return self.sessions[provider]
+            del self.sessions[provider]
         private_dir(self.settings.home)
         profile = private_dir(self.settings.home / "profiles" / provider)
         incoming = private_dir(self.settings.home / "incoming" / provider)
@@ -120,15 +141,19 @@ class BrowserBridge:
                 downloads_path=str(incoming),
                 service_workers="block",
                 viewport={"width": 1440, "height": 1000},
+                timeout=self.settings.timeout_ms,
             )
         except Exception:
             raise CampusError(
-                "Could not start Chromium. Run 'python -m playwright install chromium'; "
-                "close any other campus-data process using this profile."
+                "Could not start Chromium. Check that Playwright's Chromium is installed "
+                "and no other connector/login process holds this profile. "
+                "Run 'python -m playwright install chromium' in the connector environment.",
+                code="browser_start_failed",
             ) from None
         context.set_default_timeout(self.settings.timeout_ms)
         session = Session(context)
         self.sessions[provider] = session
+        context.on("close", lambda _: setattr(session, "closed", True))
         await context.route("**/*", lambda route: self._route(provider, route))
 
         # WebSockets must be scoped too. API introduced in Playwright 1.48.
@@ -160,6 +185,7 @@ class BrowserBridge:
             session.tasks.add(task)
             task.add_done_callback(session.tasks.discard)
 
+        page.on("close", lambda _: session.pages.pop(page_id, None))
         page.on("download", capture)
         page.on("dialog", lambda dialog: dialog.dismiss())
 
@@ -172,14 +198,23 @@ class BrowserBridge:
             pages = [p for p in session.pages.values() if not p.is_closed()]
             page = pages[-1] if pages else await session.context.new_page()
             try:
-                await page.goto(target, wait_until="load")
+                await page.goto(target, wait_until="domcontentloaded")
             except BrowserTimeout:
                 pass  # A partial page can still be inspected.
             except Exception:
                 raise CampusError(
                     "Navigation failed. Check campus/VPN connectivity and the blocked-host list."
                 ) from None
-            return await self._inspect(provider)
+            snapshot = await self._inspect(provider)
+            ready_by = time.monotonic() + 2
+            while (
+                snapshot["page_state"] == "loading_or_empty"
+                and snapshot["inspection_complete"]
+                and time.monotonic() < ready_by
+            ):
+                await asyncio.sleep(0.25)
+                snapshot = await self._inspect(provider)
+            return snapshot
 
     async def inspect(self, provider: str, control_offset: int = 0) -> dict:
         if not 0 <= control_offset <= 10000:
@@ -200,8 +235,16 @@ class BrowserBridge:
 
     async def _inspect(self, provider: str, control_offset: int = 0) -> dict:
         session = self._session(provider)
+        if session.closed:
+            raise CampusError(
+                "The browser closed. Reopen it with campus_open; do not replay "
+                "an export until its existing job/download status is checked.",
+                code="browser_closed",
+            )
         session.refs.clear()
         pages_out = []
+        warnings = []
+        deadline = time.monotonic() + self.settings.inspection_timeout_s
         for page_id, page in list(session.pages.items()):
             if page.is_closed():
                 continue
@@ -211,18 +254,31 @@ class BrowserBridge:
             for frame in page.frames:
                 if not allowed_url(provider, frame.url, self.settings.extra_hosts):
                     continue
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    warnings.append("Inspection time budget reached; some frames were omitted.")
+                    break
                 prefix = secrets.token_hex(6)
                 try:
-                    raw = await frame.evaluate(
-                        SNAPSHOT_JS,
-                        {
-                            "prefix": prefix,
-                            "limit": 250,
-                            "offset": control_offset,
-                        },
+                    raw = await asyncio.wait_for(
+                        frame.evaluate(
+                            SNAPSHOT_JS,
+                            {
+                                "prefix": prefix,
+                                "limit": 250,
+                                "offset": control_offset,
+                            },
+                        ),
+                        timeout=min(remaining, self.settings.frame_timeout_s),
                     )
+                except TimeoutError:
+                    warnings.append("A frame did not respond before the inspection deadline.")
+                    continue
                 except Exception:
-                    continue  # Frame may have navigated; next inspection retries.
+                    warnings.append(
+                        "A frame navigated, closed or became unavailable during inspection."
+                    )
+                    continue
                 controls = []
                 for meta in raw["controls"]:
                     for key in ("label", "placeholder", "name", "icon_hint", "context", "dialog"):
@@ -252,6 +308,11 @@ class BrowserBridge:
         return {
             "provider": provider,
             "headless": self.settings.headless,
+            "page_state": "content_available"
+            if any(f["text"].strip() or f["controls"] for p in pages_out for f in p["frames"])
+            else "loading_or_empty",
+            "inspection_complete": not warnings,
+            "warnings": list(dict.fromkeys(warnings)),
             "pages": pages_out,
             "provider_note": spec_for(provider).note,
             "blocked_urls": session.blocked,
@@ -392,12 +453,21 @@ class BrowserBridge:
         if not 0 <= wait_seconds <= 30:
             raise CampusError("wait_seconds must be between 0 and 30.")
         async with self.operation():
+            started = time.monotonic()
             session = self._session(provider)
             item = await self._reference(provider, ref)
             before = len(session.downloads)
             session.query_note = redact(query_note)
             await item.locator.click()
-            await self._wait_downloads(session, before, wait_seconds)
+            # Reserve enough time to inspect and reply before the operation deadline.
+            poll_budget = max(
+                0,
+                self.settings.operation_timeout_s
+                - (time.monotonic() - started)
+                - self.settings.inspection_timeout_s
+                - 2,
+            )
+            await self._wait_downloads(session, before, min(wait_seconds, poll_budget))
             return {
                 "state": "check_downloads",
                 "downloads": session.downloads[before:],
@@ -418,14 +488,14 @@ class BrowserBridge:
     async def downloads(self, provider: str, wait_seconds: int = 0) -> dict:
         if not 0 <= wait_seconds <= 30:
             raise CampusError("wait_seconds must be between 0 and 30.")
-        async with self.operation():
-            session = self._session(provider)
-            before = next(
-                (i for i, d in enumerate(session.downloads) if d["status"] == "downloading"),
-                len(session.downloads),
-            )
-            await self._wait_downloads(session, before, wait_seconds)
-            return {"provider": provider, "downloads": list(session.downloads)}
+        # Receipts are local state; never queue them behind a slow browser action.
+        session = self._session(provider)
+        before = next(
+            (i for i, d in enumerate(session.downloads) if d["status"] == "downloading"),
+            len(session.downloads),
+        )
+        await self._wait_downloads(session, before, wait_seconds)
+        return {"provider": provider, "downloads": [dict(d) for d in session.downloads]}
 
     async def _save_download(self, provider: str, download: Download, source: str, note: str):
         session = self._session(provider)
@@ -504,10 +574,16 @@ class BrowserBridge:
                 task.cancel()
             if tasks:
                 await asyncio.gather(*tasks, return_exceptions=True)
-            await session.context.close()
+            try:
+                await asyncio.wait_for(session.context.close(), timeout=3)
+            except Exception:
+                pass  # Shutdown must finish even if Chromium is unresponsive.
         self.sessions.clear()
         if self._playwright:
-            await self._playwright.stop()
+            try:
+                await asyncio.wait_for(self._playwright.stop(), timeout=3)
+            except Exception:
+                pass
             self._playwright = None
 
 

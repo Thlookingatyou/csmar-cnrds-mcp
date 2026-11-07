@@ -226,3 +226,34 @@ not need a school network or commercial data. CI runs the same suite. See
 
 MIT for this project's original code. Database products, service documentation, and
 downloaded data retain their owners' rights. This repository grants no rights to them.
+
+
+## Timeouts and recovery
+
+Browser operations have a 45-second deadline, including browser startup/action and inspection.
+A second browser operation waits at most two seconds before returning `connector_busy`;
+issue browser calls sequentially. `campus_downloads` reads local receipts independently
+and stays available during a slow browser action. Clients with a configurable tool timeout
+should allow more than 45 seconds (for example, 75 seconds) for this connector to return
+its own diagnostic reply. This does not make a denied subscription available.
+
+Page navigation waits for DOM readiness rather than every image, with a short initial
+render wait for an empty single-page app. `page_state=loading_or_empty` means the agent
+should inspect again; it is not a transport failure. Inspection spends at
+most eight seconds across frames and three seconds on any one frame. `inspection_complete`
+and `warnings` identify partial results; an omitted frame is not evidence that a table,
+login button or institutional entitlement is missing. Closed tabs are removed, and a
+closed browser can be explicitly reopened with `campus_open`.
+
+Errors include `code`, a random `request_id` and `elapsed_ms`. The same identifiers are
+written to stderr without query text, page content, URLs or credentials. Keep these fields
+when reporting a failure. `browser_start_failed` can mean missing Chromium or another
+process holding the same private profile; use one connector/login process per profile.
+A transport/startup failure before any tool reply needs client-side startup diagnostics;
+a model's paraphrase of a timeout alone cannot identify its cause.
+
+On `operation_timeout`, a click may already have reached the provider. Inspect the page,
+check `campus_downloads` and the provider's existing job list before submitting anything
+again. Export actions are never automatically replayed. A client cancellation releases the
+browser-operation lock while an already started file transfer can continue. Restart only
+when appropriate after checking downloads; do not use repeated exports as a recovery test.
