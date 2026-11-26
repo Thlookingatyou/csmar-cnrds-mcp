@@ -166,9 +166,11 @@ Default root: `~/.local/share/campus-data-mcp`. Override it with `CAMPUS_DATA_HO
 ```text
 profiles/csmar/    private dedicated Chromium profile
 profiles/cnrds/    separate CNRDS profile
+profiles/resset/   separate RESSET profile
 incoming/         browser temporary downloads
 downloads/csmar/  exports and *.manifest.json receipts
 downloads/cnrds/  exports and *.manifest.json receipts
+downloads/resset/ exports and *.manifest.json receipts
 ```
 
 Profiles contain session secrets. Do not upload them, put the state directory inside a

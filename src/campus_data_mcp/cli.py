@@ -29,7 +29,9 @@ async def _browser_command(args, settings):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Local CSMAR/CNRDS institutional browser bridge")
+    parser = argparse.ArgumentParser(
+        description="Local CSMAR/CNRDS/RESSET institutional browser bridge"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("serve", help="Run the MCP server over local stdio")
     sub.add_parser("doctor", help="Check browser installation and local configuration")

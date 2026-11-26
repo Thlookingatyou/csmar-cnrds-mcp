@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit, urlunsplit
 
-Provider = Literal["csmar", "cnrds"]
+Provider = Literal["csmar", "cnrds", "resset"]
 
 
 @dataclass(frozen=True)
@@ -17,6 +17,11 @@ class ProviderSpec:
     domain: str
     note: str
     export_hosts: tuple[str, ...] = ()
+    extra_domains: tuple[str, ...] = ()
+
+    @property
+    def domains(self) -> tuple[str, ...]:
+        return (self.domain, *self.extra_domains)
 
 
 PROVIDERS: dict[str, ProviderSpec] = {
@@ -35,6 +40,14 @@ PROVIDERS: dict[str, ProviderSpec] = {
         "personal registration, even on campus. Sample access is not full access.",
         ("cnrds-file.oss-cn-shanghai.aliyuncs.com",),
     ),
+    "resset": ProviderSpec(
+        "RESSET",
+        "https://db.resset.com/",
+        "resset.com",
+        "Experimental RESSET connection. Use your authorized campus network, VPN, "
+        "or institutional login. Subscription access and exports require live validation.",
+        extra_domains=("resset.cn",),
+    ),
 }
 
 
@@ -50,7 +63,7 @@ def spec_for(provider: str) -> ProviderSpec:
     try:
         return PROVIDERS[provider]
     except KeyError:
-        raise CampusError("Provider must be 'csmar' or 'cnrds'.") from None
+        raise CampusError("Provider must be 'csmar', 'cnrds', or 'resset'.") from None
 
 
 def safe_url(url: str) -> str:
@@ -72,8 +85,7 @@ def allowed_url(provider: str, url: str, extra_hosts: tuple[str, ...] = ()) -> b
     host = (parts.hostname or "").lower()
     spec = spec_for(provider)
     return (
-        host == spec.domain
-        or host.endswith("." + spec.domain)
+        any(host == domain or host.endswith("." + domain) for domain in spec.domains)
         or host in spec.export_hosts
         or host in extra_hosts
     )

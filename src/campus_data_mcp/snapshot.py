@@ -150,7 +150,7 @@ def redact(text: str) -> str:
 
 SCHOOL_LOGIN = re.compile(
     r"(?:学校登录|机构登录|IP登录|IP直接登录|校园网登录|机构IP登录|"
-    r"School Login|Institutional Login|Campus Login)",
+    r"CARSI(?:平台)?\s*登录|CARSI\s+login|School Login|Institutional Login|Campus Login)",
     re.I,
 )
 

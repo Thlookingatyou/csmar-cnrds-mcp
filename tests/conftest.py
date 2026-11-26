@@ -79,11 +79,19 @@ async def bridge(tmp_path):
             await route.fulfill(
                 body=(
                     "<script>function ask(){if(confirm('Verification code: 481239. "
-                    "https://www.cnrds.com/export?ticket=private-fixture-ticket'))"
+                    "https://db.resset.com/export?ticket=private-fixture-ticket'))"
                     "document.body.textContent='Confirmation accepted'}</script>"
                     '<button onclick="ask()">Trigger confirm</button>'
                 ),
                 content_type="text/html",
+            )
+        elif path == "/carsi":
+            await route.fulfill(
+                body=(
+                    '<button onclick="this.outerHTML=&quot;Institutional sign-in selected&quot;">'
+                    "CARSI平台登录</button>"
+                ),
+                content_type="text/html; charset=utf-8",
             )
         elif path == "/rate-limit-search":
             await route.fulfill(

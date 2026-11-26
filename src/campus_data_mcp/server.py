@@ -27,7 +27,7 @@ def build_server(bridge: BrowserBridge | None = None) -> FastMCP:
     server = FastMCP(
         "campus-data",
         lifespan=lifespan,
-        instructions="Local browser bridge for authorized CSMAR and CNRDS research "
+        instructions="Local browser bridge for authorized CSMAR, CNRDS, and RESSET research "
         "data. Runs hidden by default. Issue browser calls "
         "sequentially; wait for each reply before issuing the next browser action. "
         "campus_downloads can still check local receipts. Each inspection or action expires "
@@ -101,10 +101,10 @@ def build_server(bridge: BrowserBridge | None = None) -> FastMCP:
     async def campus_open(provider: Provider, url: str | None = None) -> dict:
         """Open the local provider browser. Optional URL must belong to that provider.
 
-        Reuses a dedicated private profile; never
+        Supports 'csmar', 'cnrds', and 'resset'. Reuses a dedicated private profile; never
         opens your everyday browser profile. Runs hidden by default; CAMPUS_DATA_HEADLESS=0
         enables a visible browser.
-        CSMAR may log in automatically on campus; for CNRDS try campus_school_login.
+        CSMAR and RESSET may log in automatically on campus; for CNRDS try campus_school_login.
         """
         return await invoke(browser.open(provider, url))
 

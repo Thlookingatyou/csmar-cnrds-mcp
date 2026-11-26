@@ -1,9 +1,9 @@
 ---
 name: csmar-cnrds
-description: Search and download CSMAR (国泰安) and CNRDS (中国研究数据服务平台, sometimes written CRNDS) research data through existing institutional access. Use for catalogue discovery, table and field selection, campus login, filtered exports, or setup of this project's local MCP connector. Analysis of already downloaded files alone does not require this skill.
+description: Search and download CSMAR (国泰安), CNRDS (中国研究数据服务平台, sometimes written CRNDS), research data through existing institutional access, and try the experimental RESSET (锐思数据库) connector. Use for catalogue discovery, table and field selection, campus login, filtered exports, or setup of this project's local MCP connector. Analysis of already downloaded files alone does not require this skill.
 ---
 
-# CSMAR & CNRDS research data
+# CSMAR, CNRDS & RESSET research data
 
 Help the user obtain the requested data through their institution's existing access.
 Respond in the user's language. The browser must run on their campus-connected computer
@@ -25,8 +25,9 @@ For a setup-only request, verify the connection without creating a data-export j
 1. Establish the requested provider, table or research concept, dates, entities, fields,
    frequency and output format. Search for candidate tables before asking the user to
    supply unknown vendor table names. Clarify missing choices that materially change scope.
-2. Open `csmar` or `cnrds` with `campus_open`. CSMAR may recognize the institution
-   automatically. Use `campus_school_login` when a school-login control is visible.
+2. Open `csmar`, `cnrds`, or `resset` with `campus_open`. Use `campus_school_login`
+   when an institutional login control is visible. RESSET is experimental. Verify
+   institutional access and the requested table before describing export availability.
    If personal login or CAPTCHA requires a person, finish active downloads, close that
    provider, and use `campus-data login <provider>` with the same `CAMPUS_DATA_HOME`.
    This opens a visible browser; close it before reopening the provider through MCP.
