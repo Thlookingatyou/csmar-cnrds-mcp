@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from campus_data_mcp.browser import EXPORT_EXTENSIONS, _validate_and_hash_file
-from campus_data_mcp.config import CampusError
+from campus_data_mcp.config import CampusError, spec_for
 
 from .conftest import CSV, controls, ref
 
@@ -132,6 +132,46 @@ async def test_denied_ip_is_not_reported_as_authorized(bridge):
     assert result["action"] == "not_clicked"
 
 
+async def test_http_418_waf_is_surfaced_with_guidance(bridge):
+    snapshot = await bridge.open("cnrds", "https://www.cnrds.com/waf")
+    access = snapshot["pages"][0]["frames"][0]["access"]
+    assert access["hint"] == "waf_or_bot_blocked"
+    assert snapshot["inspection_complete"]
+    assert any("HTTP 418" in w and "refused" in w for w in snapshot["warnings"])
+
+
+async def test_out_of_scope_frame_warns_instead_of_silent_drop(bridge):
+    snapshot = await bridge.open("cnrds", "https://www.cnrds.com/out-of-scope-frame")
+    assert not snapshot["inspection_complete"]
+    assert "https://sso.university.edu" in snapshot["blocked_urls"]
+    assert "private-fixture" not in json.dumps(snapshot)
+    assert any(
+        "sso.university.edu" in w and "CAMPUS_DATA_EXTRA_HOSTS" in w for w in snapshot["warnings"]
+    )
+
+
+async def test_js_confirm_dialog_is_reported_without_message_text(bridge):
+    snapshot = await bridge.open("cnrds", "https://www.cnrds.com/dialog")
+    snapshot = await bridge.act("cnrds", ref(snapshot, "Trigger confirm"), "click")
+    assert snapshot["dialogs"] == ["Dismissed a browser confirm dialog."]
+    assert "481239" not in json.dumps(snapshot)
+    assert "private-fixture-ticket" not in json.dumps(snapshot)
+    assert "Confirmation accepted" not in json.dumps(snapshot)
+    assert any("confirm" in w for w in snapshot["warnings"])
+
+
+async def test_search_reports_first_party_rate_limit_without_response_body(bridge):
+    session = await bridge._launch("cnrds")
+    page = session.context.pages[0]
+    await bridge.open("cnrds", "https://www.cnrds.com/rate-limit-search")
+    async with page.expect_response("**/rate-limit-response") as response:
+        await bridge.search("cnrds", "fixture")
+    assert (await response.value).status == 429
+    snapshot = await bridge.inspect("cnrds")
+    assert any("HTTP 429" in warning for warning in snapshot["warnings"])
+    assert "private-response-body" not in json.dumps(snapshot)
+
+
 async def test_control_pagination_can_reach_large_field_lists(bridge):
     snapshot = await bridge.open("cnrds", "https://www.cnrds.com/many")
     frame = snapshot["pages"][0]["frames"][0]
@@ -192,8 +232,8 @@ def test_7z_export_requires_archive_signature(tmp_path):
 
 @pytest.mark.parametrize("provider", ["csmar", "cnrds"])
 async def test_css_only_tutorial_close_is_actionable(bridge, provider):
-    host = "data.csmar.com" if provider == "csmar" else "www.cnrds.com"
-    snapshot = await bridge.open(provider, f"https://{host}/widgets")
+    base = spec_for(provider).home.rstrip("/")
+    snapshot = await bridge.open(provider, f"{base}/widgets")
     close = next(c for c in controls(snapshot) if c["name"] == "guide-close")
     assert close["unlabeled"]
     assert close["icon_hint"] == "css-close"
@@ -207,8 +247,8 @@ async def test_css_only_tutorial_close_is_actionable(bridge, provider):
 
 @pytest.mark.parametrize("provider", ["csmar", "cnrds"])
 async def test_dialog_download_icon_is_selected_by_its_own_row(bridge, provider):
-    host = "data.csmar.com" if provider == "csmar" else "www.cnrds.com"
-    snapshot = await bridge.open(provider, f"https://{host}/widgets")
+    base = spec_for(provider).home.rstrip("/")
+    snapshot = await bridge.open(provider, f"{base}/widgets")
     icons = [c for c in controls(snapshot) if c["label"] == "\ue618"]
     assert len(icons) == 2
     own = next(c for c in icons if "My request" in c["context"])

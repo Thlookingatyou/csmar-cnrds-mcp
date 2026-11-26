@@ -28,10 +28,12 @@ async def main():
                         json.dumps(
                             {
                                 "provider": provider,
+                                "page_state": snapshot["page_state"],
                                 "pages": len(snapshot["pages"]),
                                 "frames": len(frames),
                                 "visible_controls": sum(len(f["controls"]) for f in frames),
                                 "access_hints": [f["access"]["hint"] for f in frames],
+                                "warnings": snapshot["warnings"],
                                 "blocked_urls": snapshot["blocked_urls"],
                                 "institutional_export_verified": False,
                             },
@@ -39,7 +41,12 @@ async def main():
                         )
                     )
                 except CampusError as error:
-                    print(json.dumps({"provider": provider, "error": str(error)}))
+                    print(
+                        json.dumps(
+                            {"provider": provider, "code": error.code, "error": str(error)},
+                            ensure_ascii=False,
+                        )
+                    )
         finally:
             await bridge.shutdown()
 

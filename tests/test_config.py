@@ -1,5 +1,6 @@
 import pytest
 
+from campus_data_mcp.browser import safe_browser_error_hint
 from campus_data_mcp.config import CampusError, Settings, allowed_url, safe_url, spec_for
 from campus_data_mcp.snapshot import access_observation, is_sensitive, redact
 
@@ -92,6 +93,8 @@ def test_access_observations_never_certify_entitlement():
     assert observed["hint"] == "signed_in_observed"
     assert observed["entitlement"] == "unverified"
     assert access_observation("IP超出限定范围", [])["hint"] == "ip_not_authorized"
+    assert access_observation("安全拦截 HWWAF", [])["hint"] == "waf_or_bot_blocked"
+
 
 
 @pytest.mark.parametrize("value,hidden", [(None, True), ("1", True), ("0", False)])
@@ -102,3 +105,39 @@ def test_background_default_and_visible_override(monkeypatch, value, hidden):
     else:
         monkeypatch.setenv("CAMPUS_DATA_HEADLESS", value)
     assert Settings.from_env().headless is hidden
+
+
+def test_env_timeout_overrides(monkeypatch):
+    monkeypatch.setenv("CAMPUS_DATA_TIMEOUT_MS", "30000")
+    monkeypatch.setenv("CAMPUS_DATA_OPERATION_TIMEOUT_S", "90")
+    monkeypatch.setenv("CAMPUS_DATA_LOCK_TIMEOUT_S", "10")
+    monkeypatch.setenv("CAMPUS_DATA_INSPECTION_TIMEOUT_S", "15")
+    monkeypatch.setenv("CAMPUS_DATA_FRAME_TIMEOUT_S", "8")
+    settings = Settings.from_env()
+    assert settings.timeout_ms == 30000
+    assert settings.operation_timeout_s == 90
+    assert settings.lock_timeout_s == 10
+    assert settings.inspection_timeout_s == 15
+    assert settings.frame_timeout_s == 8
+
+    monkeypatch.setenv("CAMPUS_DATA_FRAME_TIMEOUT_S", "NaN")
+    with pytest.raises(CampusError, match="CAMPUS_DATA_FRAME_TIMEOUT_S"):
+        Settings.from_env()
+
+
+def test_safe_browser_error_hint_extracts_allowlisted_categories_only():
+    assert (
+        safe_browser_error_hint(
+            RuntimeError("Page.goto: net::ERR_NAME_NOT_RESOLVED at https://x/?token=secret")
+        )
+        == "net::ERR_NAME_NOT_RESOLVED"
+    )
+    assert (
+        safe_browser_error_hint(RuntimeError("Failed to create ProcessSingleton for profile"))
+        == "profile_in_use"
+    )
+    assert (
+        safe_browser_error_hint(RuntimeError("Executable doesn't exist at /secret/path"))
+        == "browser_missing"
+    )
+    assert safe_browser_error_hint(RuntimeError("token=private-secret")) == ""
