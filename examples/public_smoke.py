@@ -13,7 +13,7 @@ async def main():
     with tempfile.TemporaryDirectory(prefix="campus-data-public-smoke-") as folder:
         bridge = BrowserBridge(Settings(home=Path(folder), headless=True, timeout_ms=20000))
         try:
-            for provider in ("csmar", "cnrds"):
+            for provider in ("csmar", "cnrds", "resset"):
                 try:
                     snapshot = await bridge.open(provider)
                     # Public single-page applications need time to render after DOMContentLoaded.

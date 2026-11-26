@@ -10,7 +10,7 @@ from campus_data_mcp.config import CampusError, spec_for
 from .conftest import CSV, controls, ref
 
 
-@pytest.mark.parametrize("provider", ["csmar", "cnrds"])
+@pytest.mark.parametrize("provider", ["csmar", "cnrds", "resset"])
 async def test_school_login_search_filters_and_export(bridge, provider):
     snapshot = await bridge.open(provider)
     assert controls(snapshot)
@@ -121,6 +121,9 @@ async def test_session_profiles_are_separate_and_persist(bridge):
     await bridge.open("csmar")
     csmar_page = list(bridge.sessions["csmar"].pages.values())[-1]
     assert await csmar_page.evaluate("localStorage.getItem('fixture-session')") is None
+    await bridge.open("resset")
+    resset_page = list(bridge.sessions["resset"].pages.values())[-1]
+    assert await resset_page.evaluate("localStorage.getItem('fixture-session')") is None
 
 
 async def test_denied_ip_is_not_reported_as_authorized(bridge):
@@ -132,8 +135,8 @@ async def test_denied_ip_is_not_reported_as_authorized(bridge):
     assert result["action"] == "not_clicked"
 
 
-async def test_http_418_waf_is_surfaced_with_guidance(bridge):
-    snapshot = await bridge.open("cnrds", "https://www.cnrds.com/waf")
+async def test_resset_http_418_waf_is_surfaced_with_guidance(bridge):
+    snapshot = await bridge.open("resset", "https://db.resset.com/waf")
     access = snapshot["pages"][0]["frames"][0]["access"]
     assert access["hint"] == "waf_or_bot_blocked"
     assert snapshot["inspection_complete"]
@@ -141,7 +144,7 @@ async def test_http_418_waf_is_surfaced_with_guidance(bridge):
 
 
 async def test_out_of_scope_frame_warns_instead_of_silent_drop(bridge):
-    snapshot = await bridge.open("cnrds", "https://www.cnrds.com/out-of-scope-frame")
+    snapshot = await bridge.open("resset", "https://db.resset.com/out-of-scope-frame")
     assert not snapshot["inspection_complete"]
     assert "https://sso.university.edu" in snapshot["blocked_urls"]
     assert "private-fixture" not in json.dumps(snapshot)
@@ -151,13 +154,20 @@ async def test_out_of_scope_frame_warns_instead_of_silent_drop(bridge):
 
 
 async def test_js_confirm_dialog_is_reported_without_message_text(bridge):
-    snapshot = await bridge.open("cnrds", "https://www.cnrds.com/dialog")
-    snapshot = await bridge.act("cnrds", ref(snapshot, "Trigger confirm"), "click")
+    snapshot = await bridge.open("resset", "https://db.resset.com/dialog")
+    snapshot = await bridge.act("resset", ref(snapshot, "Trigger confirm"), "click")
     assert snapshot["dialogs"] == ["Dismissed a browser confirm dialog."]
     assert "481239" not in json.dumps(snapshot)
     assert "private-fixture-ticket" not in json.dumps(snapshot)
     assert "Confirmation accepted" not in json.dumps(snapshot)
     assert any("confirm" in w for w in snapshot["warnings"])
+
+
+async def test_resset_carsi_label_matches_school_login_action(bridge):
+    snapshot = await bridge.open("resset", "https://db.resset.com/carsi")
+    assert snapshot["pages"][0]["frames"][0]["access"]["hint"] == "school_login_available"
+    result = await bridge.school_login("resset")
+    assert "Institutional sign-in selected" in result["pages"][0]["frames"][0]["text"]
 
 
 async def test_search_reports_first_party_rate_limit_without_response_body(bridge):
@@ -219,6 +229,7 @@ async def test_zero_size_link_uses_its_visible_child(bridge):
 
 def test_7z_export_requires_archive_signature(tmp_path):
     assert ".7z" in EXPORT_EXTENSIONS
+    assert ".dbf" in EXPORT_EXTENSIONS
     path = tmp_path / "export.7z"
     content = b"7z\xbc\xaf\x27\x1c\x00\x04fixture"
     path.write_bytes(content)
@@ -230,7 +241,7 @@ def test_7z_export_requires_archive_signature(tmp_path):
         _validate_and_hash_file(path)
 
 
-@pytest.mark.parametrize("provider", ["csmar", "cnrds"])
+@pytest.mark.parametrize("provider", ["csmar", "cnrds", "resset"])
 async def test_css_only_tutorial_close_is_actionable(bridge, provider):
     base = spec_for(provider).home.rstrip("/")
     snapshot = await bridge.open(provider, f"{base}/widgets")
@@ -245,7 +256,7 @@ async def test_css_only_tutorial_close_is_actionable(bridge, provider):
     assert not any(c["name"] == "guide-close" for c in controls(snapshot))
 
 
-@pytest.mark.parametrize("provider", ["csmar", "cnrds"])
+@pytest.mark.parametrize("provider", ["csmar", "cnrds", "resset"])
 async def test_dialog_download_icon_is_selected_by_its_own_row(bridge, provider):
     base = spec_for(provider).home.rstrip("/")
     snapshot = await bridge.open(provider, f"{base}/widgets")

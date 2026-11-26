@@ -21,6 +21,35 @@ def test_provider_scope_accepts_https_subdomains(url):
 @pytest.mark.parametrize(
     "url",
     [
+        "https://db.resset.com/",
+        "https://resset.com/",
+        "https://www.resset.cn/",
+        "https://resset.cn/",
+        "https://file.resset.cn/export.csv",
+    ],
+)
+def test_resset_provider_scope_accepts_resset_com_and_cn(url):
+    assert allowed_url("resset", url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://resset.com.evil.invalid/",
+        "https://evilresset.cn/",
+        "http://db.resset.com/",
+        "https://db.resset.com:8443/",
+        "https://data.csmar.com/",
+        "https://www.cnrds.com/",
+    ],
+)
+def test_resset_provider_scope_denies_other_urls(url):
+    assert not allowed_url("resset", url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
         "https://csmar.com.evil.invalid/",
         "https://evilcsmar.com/",
         "http://data.csmar.com/",
@@ -46,6 +75,7 @@ def test_cnrds_export_host_is_exact_and_provider_specific():
     host = "cnrds-file.oss-cn-shanghai.aliyuncs.com"
     assert allowed_url("cnrds", f"https://{host}/export.7z")
     assert not allowed_url("csmar", f"https://{host}/export.7z")
+    assert not allowed_url("resset", f"https://{host}/export.7z")
     assert not allowed_url("cnrds", f"https://x.{host}/export.7z")
     assert not allowed_url("cnrds", "https://other.oss-cn-shanghai.aliyuncs.com/export.7z")
     assert not allowed_url("cnrds", f"http://{host}/export.7z")
@@ -94,7 +124,10 @@ def test_access_observations_never_certify_entitlement():
     assert observed["entitlement"] == "unverified"
     assert access_observation("IP超出限定范围", [])["hint"] == "ip_not_authorized"
     assert access_observation("安全拦截 HWWAF", [])["hint"] == "waf_or_bot_blocked"
-
+    assert (
+        access_observation("Welcome", [{"label": "CARSI平台登录"}])["hint"]
+        == "school_login_available"
+    )
 
 
 @pytest.mark.parametrize("value,hidden", [(None, True), ("1", True), ("0", False)])

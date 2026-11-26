@@ -41,6 +41,7 @@ EXPORT_EXTENSIONS = {
     ".dta",
     ".sav",
     ".sas7bdat",
+    ".dbf",
     ".parquet",
     ".json",
     ".rar",
@@ -542,7 +543,7 @@ class BrowserBridge:
                 return {
                     "action": "not_clicked",
                     "reason": "No unique visible school-login "
-                    "control. CSMAR may already have logged in automatically; "
+                    "control. CSMAR and RESSET may already have logged in automatically; "
                     "CNRDS may hide school login outside campus. Inspect the page and "
                     "check your network.",
                     "snapshot": snapshot,
