@@ -5,10 +5,16 @@ import re
 # We omit all input values, hidden controls, scripts, storage and HTML source.
 # References are random, ephemeral IDs, scoped to the latest provider inspection.
 SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
+  const styles = new WeakMap();
+  const styleOf = el => {
+    let s = styles.get(el);
+    if (!s) { s = getComputedStyle(el); styles.set(el, s); }
+    return s;
+  };
   const visibility = new WeakMap();
   const visible = el => {
     if (visibility.has(el)) return visibility.get(el);
-    const s = getComputedStyle(el);
+    const s = styleOf(el);
     const result = s.visibility !== 'hidden' && s.display !== 'none' &&
       [...el.getClientRects()].some(r => r.width > 0 && r.height > 0);
     visibility.set(el, result);
@@ -59,7 +65,7 @@ SNAPSHOT_JS = r"""({prefix, limit, offset}) => {
   const pointers = [...document.querySelectorAll('body *')].filter(el =>
     (el instanceof HTMLElement || el instanceof SVGSVGElement) &&
     !semanticSet.has(el) && !hasActionAncestor(el.parentElement) && visible(el) &&
-    getComputedStyle(el).cursor === 'pointer');
+    styleOf(el).cursor === 'pointer');
   const pointerSet = new Set(pointers);
   const nonLeaves = new Set();
   const visited = new Set();
@@ -142,15 +148,32 @@ def redact(text: str) -> str:
     )
 
 
+SCHOOL_LOGIN = re.compile(
+    r"(?:学校登录|机构登录|IP登录|IP直接登录|校园网登录|机构IP登录|"
+    r"School Login|Institutional Login|Campus Login)",
+    re.I,
+)
+
+
+def is_school_login(control: dict) -> bool:
+    return not control.get("disabled") and bool(SCHOOL_LOGIN.fullmatch(control["label"].strip()))
+
+
 def access_observation(text: str, controls: list[dict]) -> dict:
     """Report hints, never infer subscription entitlement from a rendered page."""
     if re.search(r"访问过于频繁|请求过于频繁|too many requests|rate.?limit", text, re.I):
         hint = "rate_limited"
+    elif re.search(
+        r"安全拦截|访问被拦截|您的访问存在异常|HWWAF|418\s+I'm a teapot|bot.*blocked",
+        text,
+        re.I,
+    ):
+        hint = "waf_or_bot_blocked"
     elif re.search(r"IP.*(不在|超出|未授权)|not.*authorized.*IP|IP.*out of range", text, re.I):
         hint = "ip_not_authorized"
     elif re.search(r"验证码|captcha|验证身份|verify your identity", text, re.I):
         hint = "manual_verification_may_be_required"
-    elif any(re.search(r"学校登录|机构登录|school login", c["label"], re.I) for c in controls):
+    elif any(is_school_login(control) for control in controls):
         hint = "school_login_available"
     elif re.search(r"退出登录|注销|log\s*out|sign\s*out", text, re.I):
         hint = "signed_in_observed"

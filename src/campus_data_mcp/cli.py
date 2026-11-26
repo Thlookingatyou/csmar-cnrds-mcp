@@ -9,7 +9,7 @@ from dataclasses import replace
 from playwright.sync_api import sync_playwright
 
 from .browser import BrowserBridge
-from .config import CampusError, Settings
+from .config import PROVIDERS, CampusError, Settings
 
 
 async def _browser_command(args, settings):
@@ -35,7 +35,7 @@ def main():
     sub.add_parser("doctor", help="Check browser installation and local configuration")
     for command in ("login", "inspect"):
         item = sub.add_parser(command)
-        item.add_argument("provider", choices=("csmar", "cnrds"))
+        item.add_argument("provider", choices=tuple(PROVIDERS))
     args = parser.parse_args()
     try:
         settings = Settings.from_env()
@@ -52,8 +52,17 @@ def main():
                 json.dumps(
                     {
                         "browser_installed": installed,
+                        "providers": list(PROVIDERS),
                         "data_home": str(settings.home),
                         "headless": settings.headless,
+                        "extra_hosts": list(settings.extra_hosts),
+                        "timeouts": {
+                            "timeout_ms": settings.timeout_ms,
+                            "operation_timeout_s": settings.operation_timeout_s,
+                            "lock_timeout_s": settings.lock_timeout_s,
+                            "inspection_timeout_s": settings.inspection_timeout_s,
+                            "frame_timeout_s": settings.frame_timeout_s,
+                        },
                         "transport": "local stdio",
                         "institutional_access": "not tested; open a provider on campus",
                     },

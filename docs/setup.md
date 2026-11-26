@@ -230,8 +230,18 @@ downloaded data retain their owners' rights. This repository grants no rights to
 
 ## Timeouts and recovery
 
-Browser operations have a 45-second deadline, including browser startup/action and inspection.
-A second browser operation waits at most two seconds before returning `connector_busy`;
+Browser operations have a 45-second default deadline, including browser startup, action,
+and inspection. For a slow connection, the connector accepts `CAMPUS_DATA_TIMEOUT_MS`,
+`CAMPUS_DATA_OPERATION_TIMEOUT_S`, `CAMPUS_DATA_LOCK_TIMEOUT_S`,
+`CAMPUS_DATA_INSPECTION_TIMEOUT_S`, and `CAMPUS_DATA_FRAME_TIMEOUT_S`. Set the client
+call timeout above the operation deadline plus the lock wait if you raise those settings.
+
+HTTP 403 and 418 indicate a refused request. HTTP 429 signals a rate limit, and 503
+indicates temporary unavailability. Observations cover permitted document, XHR, and
+fetch responses, including search and export requests. Inspect again for a late response.
+Blocked document diagnostics show hostnames. Browser dialog diagnostics show the
+outcome and omit provider-supplied message text.
+A second browser operation waits two seconds by default before returning `connector_busy`;
 issue browser calls sequentially. `campus_downloads` reads local receipts independently
 and stays available during a slow browser action. Clients with a configurable tool timeout
 should allow more than 45 seconds (for example, 75 seconds) for this connector to return

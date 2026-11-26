@@ -31,6 +31,7 @@ async def test_operation_deadline_and_cancellation_release_lock():
             await asyncio.Event().wait()
     assert result.value.code == "operation_timeout"
     assert not bridge._lock.locked()
+
     entered = asyncio.Event()
 
     async def pending():
@@ -186,3 +187,39 @@ async def test_open_waits_briefly_for_initial_spa_render(bridge):
     snapshot = await bridge.open("cnrds", "https://www.cnrds.com/spa")
     assert snapshot["page_state"] == "content_available"
     assert ref(snapshot, "Rendered")
+
+
+async def test_open_waits_past_spa_loading_placeholder(bridge):
+    context = (await bridge._launch("cnrds")).context
+    await context.route(
+        "**/spa-loading",
+        lambda route: route.fulfill(
+            body=(
+                "<body><p>加载中...</p><script>setTimeout(() => {document.body.innerHTML = "
+                "'<button>Catalogue loaded</button>'}, 150)</script></body>"
+            ),
+            content_type="text/html; charset=utf-8",
+        ),
+    )
+    snapshot = await bridge.open("cnrds", "https://www.cnrds.com/spa-loading")
+    assert snapshot["page_state"] == "content_available"
+    assert ref(snapshot, "Catalogue loaded")
+
+
+async def test_navigation_failure_reports_safe_network_hint_and_blocked_hosts(bridge, monkeypatch):
+    session = await bridge._launch("cnrds")
+    session.blocked.append("https://idp.university.edu/sso")
+    page = list(session.pages.values())[-1]
+
+    async def fail_goto(*args, **kwargs):
+        raise RuntimeError(
+            "Page.goto: net::ERR_BLOCKED_BY_CLIENT at https://idp.university.edu/sso?token=secret"
+        )
+
+    monkeypatch.setattr(page, "goto", fail_goto)
+    with pytest.raises(CampusError) as error:
+        await bridge.open("cnrds")
+    assert error.value.code == "navigation_failed"
+    assert "net::ERR_BLOCKED_BY_CLIENT" in str(error.value)
+    assert "idp.university.edu" in str(error.value)
+    assert "secret" not in str(error.value)
